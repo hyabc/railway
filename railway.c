@@ -60,11 +60,15 @@ void init_albums() {
 		gtk_widget_set_size_request(button, 160, 160);
 		gtk_widget_set_margin_start(button, 5);
 		gtk_widget_set_margin_end(button, 5);
+		gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
 		gtk_widget_set_visible(button, TRUE);
 		g_signal_connect(button, "clicked", G_CALLBACK(album_button_callback), album_array[i]);
 
+		//Create pixbuf
+		GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file_at_scale("cover.jpg", 160, 160, FALSE, NULL);
+
 		//Create an image in the button
-		GtkWidget *image = gtk_image_new_from_file("cover.jpg");
+		GtkWidget *image = gtk_image_new_from_pixbuf(pixbuf);
 		gtk_button_set_image(GTK_BUTTON(button), image);
 		gtk_widget_set_visible(image, TRUE);
 

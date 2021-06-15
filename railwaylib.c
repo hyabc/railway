@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include <fcntl.h>
 #include <dirent.h>
 #include <unistd.h>
 #include <gtk/gtk.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <sys/stat.h>
 #include "railwaylib.h"
 
@@ -132,6 +135,48 @@ void generate_album_list() {
 		album_iter++;
 		album_last = album_last->next;
 	}
+/*
+	char image_path_buffer[PATH_LENGTH_MAX], song_path_buffer[PATH_LENGTH_MAX];
+	for (int i = 0;i < album_count;i++) {
+		strcpy(image_path_buffer, album_cache_path);
+		strcat(image_path_buffer, "/");
+		strcat(image_path_buffer, album_array[i]->album_name);
+		strcat(image_path_buffer, ".jpg");
+
+		struct dirent *song_dp;
+		DIR *song_dir;
+		bool exist_song = false;
+		if ((song_dir = opendir(album_array[i]->filename)) == NULL) {
+			continue;
+		}
+		while ((song_dp = readdir(song_dir)) != NULL) {
+			if (strcmp(song_dp->d_name, ".") == 0 || strcmp(song_dp->d_name, "..") == 0) continue;
+
+			strcpy(song_path_buffer, album_array[i]->filename);
+			strcat(song_path_buffer, "/");
+			strcat(song_path_buffer, song_dp->d_name);
+
+			stat(song_path_buffer, &path_stat);
+			if (!S_ISREG(path_stat.st_mode)) continue;
+			
+			exist_song = true;
+			break;
+		}
+		closedir(song_dir);
+
+		if (!exist_song) continue;
+
+		printf("write album %s\n", song_path_buffer);
+		pid_t pid;
+		int ret;
+		if ((pid = fork()) == 0) {
+			int null_fd = open("/dev/null", O_WRONLY);
+			dup2(null_fd, 1);
+			dup2(null_fd, 2);
+			execl("/usr/bin/ffmpeg", "-nostdin", "-n", "-i", song_path_buffer, image_path_buffer, NULL);
+		}
+		waitpid(pid, &ret, 0);
+	}*/
 }
 
 void destroy_album_list() {
