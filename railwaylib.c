@@ -135,14 +135,19 @@ void generate_album_list() {
 		album_iter++;
 		album_last = album_last->next;
 	}
-/*
+}
+
+void generate_album_button_image(GtkWidget **button_array) {
 	char image_path_buffer[PATH_LENGTH_MAX], song_path_buffer[PATH_LENGTH_MAX];
+	struct stat path_stat;
 	for (int i = 0;i < album_count;i++) {
+		//Generate image path to save
 		strcpy(image_path_buffer, album_cache_path);
 		strcat(image_path_buffer, "/");
 		strcat(image_path_buffer, album_array[i]->album_name);
 		strcat(image_path_buffer, ".jpg");
 
+		//Try to find one file as song
 		struct dirent *song_dp;
 		DIR *song_dir;
 		bool exist_song = false;
@@ -166,17 +171,31 @@ void generate_album_list() {
 
 		if (!exist_song) continue;
 
-		printf("write album %s\n", song_path_buffer);
-		pid_t pid;
-		int ret;
-		if ((pid = fork()) == 0) {
-			int null_fd = open("/dev/null", O_WRONLY);
-			dup2(null_fd, 1);
-			dup2(null_fd, 2);
-			execl("/usr/bin/ffmpeg", "-nostdin", "-n", "-i", song_path_buffer, image_path_buffer, NULL);
+		if (stat(image_path_buffer, &path_stat) != 0) {
+			//Execute ffmpeg to save album art image
+			pid_t pid;
+			int ret;
+			if ((pid = fork()) == 0) {
+				int null_fd = open("/dev/null", O_WRONLY);
+				dup2(null_fd, 1);
+				dup2(null_fd, 2);
+				execl("/usr/bin/ffmpeg", "-nostdin", "-n", "-i", song_path_buffer, image_path_buffer, NULL);
+			}
+			waitpid(pid, &ret, 0);
 		}
-		waitpid(pid, &ret, 0);
-	}*/
+
+		//Create pixbuf
+		GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file_at_scale(image_path_buffer, 160, 160, FALSE, NULL);
+		if (pixbuf == NULL) continue;
+
+		//Create an image in the button
+		GtkWidget *image = gtk_image_new_from_pixbuf(pixbuf);
+		if (image == NULL) continue;
+		gtk_button_set_image(GTK_BUTTON(button_array[i]), image);
+		gtk_widget_set_visible(image, TRUE);
+	}
+	free(button_array);
+	//while (true) ;
 }
 
 void destroy_album_list() {

@@ -48,6 +48,11 @@ void album_button_callback(GtkWidget *widget, gpointer data) {
 
 void init_albums() {
 	GtkWidget *albums_widget = GTK_WIDGET(gtk_builder_get_object(builder, "albums"));
+	GtkWidget **button_array = malloc(sizeof(GtkWidget*) * album_count);
+	if (button_array == NULL) {
+		fprintf(stderr, "Insufficient memory\n");
+		exit(1);
+	}
 	for (int i = 0;i < album_count;i++) {
 		//Create a box
 		GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -63,14 +68,7 @@ void init_albums() {
 		gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
 		gtk_widget_set_visible(button, TRUE);
 		g_signal_connect(button, "clicked", G_CALLBACK(album_button_callback), album_array[i]);
-
-		//Create pixbuf
-		GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file_at_scale("cover.jpg", 160, 160, FALSE, NULL);
-
-		//Create an image in the button
-		GtkWidget *image = gtk_image_new_from_pixbuf(pixbuf);
-		gtk_button_set_image(GTK_BUTTON(button), image);
-		gtk_widget_set_visible(image, TRUE);
+		button_array[i] = button;
 
 		//Create a label in the box
 		GtkWidget *label = gtk_label_new(album_array[i]->album_name);
@@ -79,6 +77,12 @@ void init_albums() {
 		gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
 		gtk_widget_set_visible(label, TRUE);
 	}
+
+	//Launch album drawing thread
+	gdk_threads_add_idle(generate_album_button_image, button_array);
+/*	pthread_t thread;
+	pthread_create(&thread, NULL, (void * (*)(void *))(generate_album_button_image), button_array);*/
+//	generate_album_button_image(button_array);
 }
 
 void init_signal() {
@@ -105,10 +109,10 @@ int main(int argc, char* argv[]) {
 	}
 
 	init_library();
+	init_signal();
 	generate_album_list();
 	init_albums();
 	init_songs();
-	init_signal();
 
 	gtk_main();
 

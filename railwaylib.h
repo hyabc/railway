@@ -1,3 +1,5 @@
+#include <gtk/gtk.h>
+
 typedef struct album_type {
 	int id;
 	char *filename;
@@ -22,3 +24,4 @@ void generate_album_list();
 void generate_song_list(album_type*);
 void destroy_album_list();
 void destroy_song_list();
+void generate_album_button_image(GtkWidget**);
