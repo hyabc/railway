@@ -1,4 +1,5 @@
 #include <gtk/gtk.h>
+#include "railwaylib.h"
 
 void func(GtkWidget *widget, gpointer data) {
 	g_print("Hello World\n");
@@ -7,20 +8,11 @@ void func(GtkWidget *widget, gpointer data) {
 char arr[100][100];
 
 void init_albums(GtkBuilder* builder) {
-	strcpy(arr[0], "QwQ");
-	strcpy(arr[1], "QuQ");
-	strcpy(arr[2], "QAQ");
-	strcpy(arr[3], "QwQ");
-	strcpy(arr[4], "QuQ");
-	strcpy(arr[5], "QAQ");
-	strcpy(arr[6], "QwQ");
-	strcpy(arr[7], "QuQ");
-	strcpy(arr[8], "QAQ");
-	strcpy(arr[9], "QAQ");
-	GtkWidget *albums = GTK_WIDGET(gtk_builder_get_object(builder, "albums"));
-	for (int i = 0;i < 10;i++) {
-		GtkWidget *button = gtk_button_new_with_label(arr[i]);
-		gtk_container_add(GTK_CONTAINER(albums), button);
+	generate_album_list();
+	GtkWidget *albums_widget = GTK_WIDGET(gtk_builder_get_object(builder, "albums"));
+	for (int i = 0;i < album_count;i++) {
+		GtkWidget *button = gtk_button_new_with_label(album_array[i]->album_name);
+		gtk_container_add(GTK_CONTAINER(albums_widget), button);
 		gtk_widget_set_size_request(button, 120, 120);
 		gtk_widget_set_margin_start(button, 20);
 		gtk_widget_set_margin_end(button, 20);
@@ -74,6 +66,7 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 
+	init_library();
 	init_albums(builder);
 	init_songs(builder);
 	init_songs(builder);
@@ -81,5 +74,6 @@ int main(int argc, char* argv[]) {
 
 	gtk_main();
 
+	destroy_album_list();
 	return 0;
 }
