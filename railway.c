@@ -8,17 +8,24 @@ void func(GtkWidget *widget, gpointer data) {
 char arr[100][100];
 
 void init_albums(GtkBuilder* builder) {
-	generate_album_list();
 	GtkWidget *albums_widget = GTK_WIDGET(gtk_builder_get_object(builder, "albums"));
 	for (int i = 0;i < album_count;i++) {
-		GtkWidget *button = gtk_button_new_with_label(album_array[i]->album_name);
-		gtk_container_add(GTK_CONTAINER(albums_widget), button);
-		gtk_widget_set_size_request(button, 120, 120);
-		gtk_widget_set_margin_start(button, 20);
-		gtk_widget_set_margin_end(button, 20);
-		gtk_widget_set_margin_top(button, 20);
-		gtk_widget_set_margin_bottom(button, 20);
+		GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+		gtk_container_add(GTK_CONTAINER(albums_widget), box);
+		gtk_widget_set_visible(box, TRUE);
+
+		GtkWidget *button = gtk_button_new();
+		gtk_container_add(GTK_CONTAINER(box), button);
+		gtk_widget_set_size_request(button, 160, 160);
+		gtk_widget_set_margin_start(button, 5);
+		gtk_widget_set_margin_end(button, 5);
 		gtk_widget_set_visible(button, TRUE);
+
+		GtkWidget *label = gtk_label_new(album_array[i]->album_name);
+		gtk_container_add(GTK_CONTAINER(box), label);
+		gtk_label_set_max_width_chars(GTK_LABEL(label), 15);
+		gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
+		gtk_widget_set_visible(label, TRUE);
 	}
 }
 
@@ -67,6 +74,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	init_library();
+	generate_album_list();
 	init_albums(builder);
 	init_songs(builder);
 	init_songs(builder);
