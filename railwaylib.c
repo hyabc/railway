@@ -11,7 +11,7 @@
 #define PATH_LENGTH_MAX 1000
 #define NAME_LENGTH_MAX 1000
 
-char library_path[PATH_LENGTH_MAX];
+char library_path[PATH_LENGTH_MAX], album_cache_path[PATH_LENGTH_MAX];
 album_type *album_list, **album_array;
 song_type *song_list, **song_array;
 size_t album_count, song_count;
@@ -34,6 +34,11 @@ void init_library() {
 		exit(1);
 	}
 	strcpy(library_path, value);
+	if ((value = g_key_file_get_string(keyfile, "railway", "ALBUM_CACHE_PATH", NULL)) == NULL) {
+		fprintf(stderr, "configuration error\n");
+		exit(1);
+	}
+	strcpy(album_cache_path, value);
 	g_key_file_free(keyfile);
 
 	album_array = NULL;
@@ -142,7 +147,7 @@ void destroy_album_list() {
 	}
 }
 
-void generate_song_list(const char* album_path) {
+void generate_song_list(album_type* current_album) {
 	//Init song list
 	song_list = NULL;
 	song_count = 0;
@@ -154,7 +159,7 @@ void generate_song_list(const char* album_path) {
 	DIR *song_dir;
 	struct stat path_stat;
 
-	if ((song_dir = opendir(album_path)) == NULL) {
+	if ((song_dir = opendir(current_album->filename)) == NULL) {
 		fprintf(stderr, "open album directory failed\n");
 		exit(1);
 	}
@@ -165,7 +170,7 @@ void generate_song_list(const char* album_path) {
 		if (strcmp(song_name_buffer, ".") == 0 || strcmp(song_name_buffer, "..") == 0) continue;
 
 		//Generate song path
-		strcpy(song_path_buffer, album_path);
+		strcpy(song_path_buffer, current_album->filename);
 		strcat(song_path_buffer, "/");
 		strcat(song_path_buffer, song_dp->d_name);
 
@@ -181,6 +186,7 @@ void generate_song_list(const char* album_path) {
 		}
 		current_song->next = NULL;
 		current_song->id = song_count++;
+		current_song->album_id = current_album->id;
 		current_song->filename = malloc(strlen(song_path_buffer) + 1);
 		current_song->song_name = malloc(strlen(song_name_buffer) + 1);
 		if (current_song->filename == NULL || current_song->song_name == NULL) {
