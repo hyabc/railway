@@ -35,6 +35,9 @@ void init_library() {
 	}
 	strcpy(library_path, value);
 	g_key_file_free(keyfile);
+
+	album_array = NULL;
+	song_array = NULL;
 }
 
 void generate_album_list() {
@@ -127,6 +130,7 @@ void generate_album_list() {
 }
 
 void destroy_album_list() {
+	if (album_array == NULL) return;
 	free(album_array);
 	while (album_list != NULL) {
 		album_type* last = album_list;
@@ -208,10 +212,10 @@ void generate_song_list(const char* album_path) {
 		song_iter++;
 		song_last = song_last->next;
 	}
-	for (int i = 0;i < song_count;i++) printf("%s\n", song_array[i]->filename);
 }
 
 void destroy_song_list() {
+	if (song_array == NULL) return;
 	free(song_array);
 	while (song_list != NULL) {
 		song_type* last = song_list;
