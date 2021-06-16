@@ -127,6 +127,7 @@ void init_signal() {
 	GObject *window, *button;
 	window = gtk_builder_get_object(builder, "window");
 	g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+	gtk_window_set_title(GTK_WINDOW(window), "Project Railway");
 
 	button = gtk_builder_get_object(builder, "next");
 	g_signal_connect(button, "clicked", G_CALLBACK(func), NULL);
