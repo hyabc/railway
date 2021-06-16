@@ -40,6 +40,7 @@ void update_songs_cb(GtkWidget *widget, album_type *current_album) {
 		gtk_container_add(GTK_CONTAINER(songs), button);
 		gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
 		gtk_widget_set_visible(button, TRUE);
+		gtk_widget_set_size_request(button, -1, 48);
 		g_signal_connect(button, "clicked", G_CALLBACK(play_song_cb), song_array[i]);
 
 		//Create a label in the button
