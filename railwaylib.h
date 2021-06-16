@@ -1,3 +1,6 @@
+#ifndef __RAILWAY_LIB_H__
+#define __RAILWAY_LIB_H__
+
 #include <gtk/gtk.h>
 
 #define PATH_LENGTH_MAX 1000
@@ -29,3 +32,5 @@ void generate_song_list(album_type*);
 void destroy_album_list();
 void destroy_song_list();
 void generate_album_button_image(GTask*, void*, album_type*, void*);
+
+#endif

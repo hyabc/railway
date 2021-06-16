@@ -1,30 +1,27 @@
 #include <gtk/gtk.h>
+#include <gst/gst.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include "railwaylib.h"
+#include "railwaymusic.h"
 
 GtkBuilder *builder;
+
+void pause_button_trigger_cb(GtkWidget *widget, void*) {
+	music_pause_trigger();
+}
 
 void func() {
 	g_print("Hello World\n");
 }
 
-void play_song(GtkWidget *widget, song_type *current_song) {
-	g_print("%s\n", current_song->song_name);
-
-	pid_t pid;
-	int ret;
-	if ((pid = fork()) == 0) {
-/*		int null_fd = open("/dev/null", O_WRONLY);
-		dup2(null_fd, 1);
-		dup2(null_fd, 2);*/
-		printf("%s\n", current_song->filename);
-		execl("/usr/bin/ffplay", "-nostdin", current_song->filename, NULL);
-	}
+void play_song_cb(GtkWidget *widget, song_type *current_song) {
+	music_play(current_song->filename);
 }
 
-void update_songs(GtkWidget *widget, album_type *current_album) {
+void update_songs_cb(GtkWidget *widget, album_type *current_album) {
 	//Update song list
 	destroy_song_list();
 	generate_song_list(current_album);
@@ -38,7 +35,7 @@ void update_songs(GtkWidget *widget, album_type *current_album) {
 		gtk_container_add(GTK_CONTAINER(songs), button);
 		gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
 		gtk_widget_set_visible(button, TRUE);
-		g_signal_connect(button, "clicked", G_CALLBACK(play_song), song_array[i]);
+		g_signal_connect(button, "clicked", G_CALLBACK(play_song_cb), song_array[i]);
 
 		//Create a label in the button
 		GtkWidget *label = gtk_label_new(song_array[i]->song_name);
@@ -51,7 +48,7 @@ void update_songs(GtkWidget *widget, album_type *current_album) {
 GTask **album_image_tasks;
 size_t album_image_task_count;
 
-void album_image_draw(GtkWidget *widget, void*, void*) {
+void album_image_draw_cb(GtkWidget *widget, void*, void*) {
 	album_type *current_album = album_array[album_image_task_count];
 
 	//Create image path
@@ -103,7 +100,7 @@ void init_albums() {
 		gtk_widget_set_margin_end(button, 5);
 		gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
 		gtk_widget_set_visible(button, TRUE);
-		g_signal_connect(button, "clicked", G_CALLBACK(update_songs), album_array[i]);
+		g_signal_connect(button, "clicked", G_CALLBACK(update_songs_cb), album_array[i]);
 
 		//Create a label in the box
 		GtkWidget *label = gtk_label_new(album_array[i]->album_name);
@@ -113,7 +110,7 @@ void init_albums() {
 		gtk_widget_set_visible(label, TRUE);
 		
 		//Create task for each album
-		album_image_tasks[i] = g_task_new(button, NULL, (GAsyncReadyCallback)(album_image_draw), NULL);
+		album_image_tasks[i] = g_task_new(button, NULL, (GAsyncReadyCallback)(album_image_draw_cb), NULL);
 		g_task_set_task_data(album_image_tasks[i], album_array[i], NULL);
 	}
 
@@ -122,24 +119,26 @@ void init_albums() {
 	g_task_run_in_thread(album_image_tasks[0], (GTaskThreadFunc)(generate_album_button_image));
 }
 
-
-void init_signal() {
-	GObject *window, *button;
+void init_window() {
+	GObject *window;
 	window = gtk_builder_get_object(builder, "window");
 	g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 	gtk_window_set_title(GTK_WINDOW(window), "Project Railway");
+}
 
+void init_control() {
+	GObject *button;
 	button = gtk_builder_get_object(builder, "next");
 	g_signal_connect(button, "clicked", G_CALLBACK(func), NULL);
 	button = gtk_builder_get_object(builder, "previous");
 	g_signal_connect(button, "clicked", G_CALLBACK(func), NULL);
 	button = gtk_builder_get_object(builder, "play");
-	g_signal_connect(button, "clicked", G_CALLBACK(gtk_main_quit), NULL);
-
+	g_signal_connect(button, "clicked", G_CALLBACK(pause_button_trigger_cb), NULL);
 }
 
 int main(int argc, char* argv[]) {
 	gtk_init(&argc, &argv);
+	gst_init(&argc, &argv);
 
 	builder = gtk_builder_new();
 	if (gtk_builder_add_from_file(builder, "railway.ui", NULL) == 0) {
@@ -147,8 +146,10 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 
+	init_music();
 	init_library();
-	init_signal();
+	init_window();
+	init_control();
 	generate_album_list();
 	init_albums();
 
@@ -156,5 +157,6 @@ int main(int argc, char* argv[]) {
 
 	destroy_album_list();
 	destroy_song_list();
+
 	return 0;
 }

@@ -1,13 +1,16 @@
 all: railway
 
 railway.o: railway.c
-	gcc railway.c -c -o railway.o `pkg-config --cflags gtk+-3.0` -Wall
+	gcc railway.c -c -o railway.o `pkg-config --cflags gtk+-3.0 gstreamer-1.0` -Wall
 
 railwaylib.o: railwaylib.c
 	gcc railwaylib.c -c -o railwaylib.o `pkg-config --cflags gtk+-3.0` -Wall
 
-railway: railway.o railwaylib.o
-	gcc railway.o railwaylib.o -o railway `pkg-config --libs gtk+-3.0` -pthread -Wall
+railwaymusic.o: railwaymusic.c
+	gcc railwaymusic.c -c -o railwaymusic.o `pkg-config --cflags gtk+-3.0 gstreamer-1.0 gstreamer-player-1.0` -Wall
+
+railway: railway.o railwaylib.o railwaymusic.o
+	gcc railway.o railwaylib.o railwaymusic.o -o railway `pkg-config --libs gtk+-3.0 gstreamer-1.0 gstreamer-player-1.0` -pthread -Wall
 
 clean:
 	rm railway *.o
