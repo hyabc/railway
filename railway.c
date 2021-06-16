@@ -72,6 +72,9 @@ void album_image_draw_cb(GtkWidget *widget, void*, void*) {
 	if (album_image_task_count < album_count) {
 		g_task_run_in_thread(album_image_tasks[album_image_task_count], (GTaskThreadFunc)(generate_album_button_image));
 	} else {
+		for (int i = 0;i < album_count;i++) {
+			g_object_unref(album_image_tasks[i]);
+		}
 		free(album_image_tasks);
 	}
 }
@@ -158,5 +161,8 @@ int main(int argc, char* argv[]) {
 	destroy_album_list();
 	destroy_song_list();
 
+	destroy_music();
+
+	g_object_unref(builder);
 	return 0;
 }

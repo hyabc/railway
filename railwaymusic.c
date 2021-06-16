@@ -33,3 +33,7 @@ void init_music() {
 	music_player = gst_player_new(NULL, NULL);
 	music_play_state = false;
 }
+
+void destroy_music() {
+	g_object_unref(music_player);
+}

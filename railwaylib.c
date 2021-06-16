@@ -29,16 +29,24 @@ void init_library() {
 		fprintf(stderr, "read configuration failed\n");
 		exit(1);
 	}
+
+	//Get LIBRARY_PATH
 	if ((value = g_key_file_get_string(keyfile, "railway", "LIBRARY_PATH", NULL)) == NULL) {
 		fprintf(stderr, "configuration error\n");
 		exit(1);
 	}
 	strcpy(library_path, value);
+	g_free(value);
+
+	//Get ALBUM_CACHE_FREE
 	if ((value = g_key_file_get_string(keyfile, "railway", "ALBUM_CACHE_PATH", NULL)) == NULL) {
 		fprintf(stderr, "configuration error\n");
 		exit(1);
 	}
 	strcpy(album_cache_path, value);
+	g_free(value);
+
+	//Free keyfile
 	g_key_file_free(keyfile);
 
 	album_array = NULL;
