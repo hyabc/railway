@@ -24,6 +24,37 @@ void func() {
 
 void play_song_cb(GtkWidget *widget, song_type *current_song) {
 	music_play(current_song->filename);
+
+	//Prepare text for song_info_label
+	char song_info_buffer[NAME_LENGTH_MAX];
+	strcpy(song_info_buffer, "");
+	if (current_song->tag_title != NULL) {
+		strcat(song_info_buffer, current_song->tag_title);
+	}
+	strcat(song_info_buffer, " by ");
+	if (current_song->tag_artist != NULL) {
+		strcat(song_info_buffer, current_song->tag_artist);
+	}
+
+	//Set song_info_label
+	GtkWidget *song_info_label = GTK_WIDGET(gtk_builder_get_object(builder, "song_info_label"));
+	gtk_label_set_text(GTK_LABEL(song_info_label), song_info_buffer);
+
+	//Create image path
+	char image_path_buffer[PATH_LENGTH_MAX];
+	strcpy(image_path_buffer, album_cache_path);
+	strcat(image_path_buffer, "/");
+	strcat(image_path_buffer, album_array[current_song->album_id]->album_name);
+	strcat(image_path_buffer, ".jpg");
+
+	//Create pixbuf
+	GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file_at_scale(image_path_buffer, 80, 80, FALSE, NULL);
+	if (pixbuf != NULL) {
+		//Apply image to song_info_image
+		GtkWidget *song_info_image = GTK_WIDGET(gtk_builder_get_object(builder, "song_info_image"));
+		gtk_image_set_from_pixbuf(GTK_IMAGE(song_info_image), pixbuf);
+		gtk_widget_set_visible(song_info_image, TRUE);
+	}
 }
 
 void update_songs_cb(GtkWidget *widget, album_type *current_album) {
