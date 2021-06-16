@@ -18,10 +18,6 @@ void music_play(const char* filename) {
 	gst_player_set_uri(music_player, song_path_buffer);
 	gst_player_play(music_player);
 	music_play_state = true;
-
-	GstStructure *config = gst_player_get_config(music_player);
-	unsigned int interval = gst_player_config_get_position_update_interval(config);
-	printf("%u\n", interval);
 }
 
 bool music_pause_trigger() {

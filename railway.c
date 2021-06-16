@@ -13,15 +13,33 @@
 GtkBuilder *builder;
 
 void music_position_update_cb(GstPlayer*, GstClockTime, void*) {
-	double progress = (double)(music_position()) / (double)(music_duration());
+	//Get time
+	int position_sec = GST_TIME_AS_SECONDS(music_position());
+	int duration_sec = GST_TIME_AS_SECONDS(music_duration());
+	double progress = (double)(position_sec) / (double)(duration_sec);
+
+	//Update playback
 	GObject *playback_adj;
 	playback_adj = gtk_builder_get_object(builder, "playback_adjustment");
 	gtk_adjustment_set_value(GTK_ADJUSTMENT(playback_adj), progress);
+
+	//Prepare duration text
+	char duration_buffer[NAME_LENGTH_MAX];
+	sprintf(duration_buffer, "%02d:%02d/%02d:%02d", position_sec / 60, position_sec % 60, duration_sec / 60, duration_sec % 60);
+
+	//Set song_position_label
+	GtkWidget *song_position_label = GTK_WIDGET(gtk_builder_get_object(builder, "song_position_label"));
+	gtk_label_set_text(GTK_LABEL(song_position_label), duration_buffer);
 }
 
 void music_position_modify_cb(GtkWidget* widget, void*) {
-	double progress = (double)(music_position()) / (double)(music_duration());
+	//Get time
+	int position_sec = GST_TIME_AS_SECONDS(music_position());
+	int duration_sec = GST_TIME_AS_SECONDS(music_duration());
+	double progress = (double)(position_sec) / (double)(duration_sec);
 	double new_progress = gtk_adjustment_get_value(GTK_ADJUSTMENT(widget));
+
+	//Update position if needed
 	if (fabs(progress - new_progress) > 0.01) {
 		music_seek(new_progress * music_duration());
 	}
@@ -48,10 +66,14 @@ void play_song_cb(GtkWidget *widget, song_type *current_song) {
 	strcpy(song_info_buffer, "");
 	if (current_song->tag_title != NULL) {
 		strcat(song_info_buffer, current_song->tag_title);
+	} else {
+		strcat(song_info_buffer, "unknown");
 	}
 	strcat(song_info_buffer, " by ");
 	if (current_song->tag_artist != NULL) {
 		strcat(song_info_buffer, current_song->tag_artist);
+	} else {
+		strcat(song_info_buffer, "unknown");
 	}
 
 	//Set song_info_label
@@ -100,10 +122,9 @@ void update_songs_cb(GtkWidget *widget, album_type *current_album) {
 	}
 }
 
-GTask **album_image_tasks;
 size_t album_image_task_count;
 
-void album_image_draw_cb(GtkWidget *widget, void*, void*) {
+void album_image_draw_cb(GtkWidget *widget, void*, GTask **album_image_tasks, void*) {
 	album_type *current_album = album_array[album_image_task_count];
 
 	//Create image path
@@ -136,7 +157,7 @@ void album_image_draw_cb(GtkWidget *widget, void*, void*) {
 
 void init_albums() {
 	//Init gtask array
-	album_image_tasks = malloc(sizeof(GTask*) * album_count);
+	GTask **album_image_tasks = malloc(sizeof(GTask*) * album_count);
 	if (album_image_tasks == NULL) {
 		fprintf(stderr, "Insufficient memory\n");
 		exit(1);
@@ -168,7 +189,7 @@ void init_albums() {
 		gtk_widget_set_visible(label, TRUE);
 		
 		//Create task for each album
-		album_image_tasks[i] = g_task_new(button, NULL, (GAsyncReadyCallback)(album_image_draw_cb), NULL);
+		album_image_tasks[i] = g_task_new(button, NULL, (GAsyncReadyCallback)(album_image_draw_cb), album_image_tasks);
 		g_task_set_task_data(album_image_tasks[i], album_array[i], NULL);
 	}
 
