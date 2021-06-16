@@ -11,7 +11,7 @@ void music_play(const char* filename) {
 	gst_player_stop(music_player);
 
 	char song_path_buffer[PATH_LENGTH_MAX];
-	strcpy(song_path_buffer, "file:");
+	strcpy(song_path_buffer, "file://");
 	strcat(song_path_buffer, filename);
 
 	gst_player_set_uri(music_player, song_path_buffer);
