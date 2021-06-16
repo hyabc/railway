@@ -14,3 +14,12 @@ railway: railway.o railwaylib.o railwaymusic.o
 
 clean:
 	rm railway *.o
+
+install: railway
+	cp railway.desktop ~/.local/share/applications/
+	mkdir -p ~/.local/bin/railway
+	cp railway railway.ui ~/.local/bin/railway/
+
+uninstall:
+	rm -rf ~/.local/share/applications/railway.desktop
+	rm -rf ~/.local/bin/railway

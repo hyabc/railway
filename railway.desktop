@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Project Railway
+GenericName=Music Player
+Categories=Audio;
+Exec=sh -c "cd ~/.local/bin/railway && ./railway"
