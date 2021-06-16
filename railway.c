@@ -1,13 +1,31 @@
 #include <gtk/gtk.h>
 #include <gst/gst.h>
+#include <gst/player/player.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <math.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include "railway.h"
 #include "railwaylib.h"
 #include "railwaymusic.h"
 
 GtkBuilder *builder;
+
+void music_position_update_cb(GstPlayer*, GstClockTime, void*) {
+	double progress = (double)(music_position()) / (double)(music_duration());
+	GObject *playback_adj;
+	playback_adj = gtk_builder_get_object(builder, "playback_adjustment");
+	gtk_adjustment_set_value(GTK_ADJUSTMENT(playback_adj), progress);
+}
+
+void music_position_modify_cb(GtkWidget* widget, void*) {
+	double progress = (double)(music_position()) / (double)(music_duration());
+	double new_progress = gtk_adjustment_get_value(GTK_ADJUSTMENT(widget));
+	if (fabs(progress - new_progress) > 0.01) {
+		music_seek(new_progress * music_duration());
+	}
+}
 
 void pause_button_trigger_cb(GtkWidget *widget, void*) {
 	bool play_state = music_pause_trigger();
@@ -179,9 +197,11 @@ void init_control() {
 	button = gtk_builder_get_object(builder, "play");
 	g_signal_connect(button, "clicked", G_CALLBACK(pause_button_trigger_cb), NULL);
 
-	GObject *adj;
-	adj = gtk_builder_get_object(builder, "volume_adjustment");
-	g_signal_connect(adj, "value_changed", G_CALLBACK(control_volume_cb), NULL);
+	GObject *vol_adj, *playback_adj;
+	vol_adj = gtk_builder_get_object(builder, "volume_adjustment");
+	g_signal_connect(vol_adj, "value_changed", G_CALLBACK(control_volume_cb), NULL);
+	playback_adj = gtk_builder_get_object(builder, "playback_adjustment");
+	g_signal_connect(playback_adj, "value_changed", G_CALLBACK(music_position_modify_cb), NULL);
 }
 
 int main(int argc, char* argv[]) {
