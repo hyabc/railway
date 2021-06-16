@@ -19,6 +19,8 @@ typedef struct song_type {
 	char *filename;
 	char *song_name;
 	struct song_type *next;
+	char *tag_title, *tag_album, *tag_artist;
+	int tag_track_number;
 } song_type;
 
 extern size_t album_count, song_count;
@@ -27,8 +29,9 @@ extern song_type **song_array;
 extern char library_path[], album_cache_path[];
 
 void init_library();
+void destroy_library();
 void generate_album_list();
-void generate_song_list(album_type*);
+void generate_song_list(const album_type*);
 void destroy_album_list();
 void destroy_song_list();
 void generate_album_button_image(GTask*, void*, album_type*, void*);

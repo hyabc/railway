@@ -6,6 +6,8 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <gtk/gtk.h>
+#include <gst/gst.h>
+#include <gst/pbutils/pbutils.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -15,6 +17,8 @@ char library_path[PATH_LENGTH_MAX], album_cache_path[PATH_LENGTH_MAX];
 album_type *album_list, **album_array;
 song_type *song_list, **song_array;
 size_t album_count, song_count;
+
+GstDiscoverer *library_discoverer;
 
 void init_library() {
 	// Create configuration path
@@ -49,8 +53,16 @@ void init_library() {
 	//Free keyfile
 	g_key_file_free(keyfile);
 
+
+	//Init discoverer
+	library_discoverer = gst_discoverer_new(1 * GST_SECOND, NULL);
+
 	album_array = NULL;
 	song_array = NULL;
+}
+
+void destroy_library() {
+	g_object_unref (library_discoverer);
 }
 
 void generate_album_list() {
@@ -196,14 +208,66 @@ void destroy_album_list() {
 	while (album_list != NULL) {
 		album_type* last = album_list;
 		album_list = last->next;
+
+		//Free strings
 		free(last->filename);
 		free(last->album_name);
 		free(last->artist_name);
+
+		//Free this node
 		free(last);
 	}
 }
 
-void generate_song_list(album_type* current_album) {
+void generate_song_tags() {
+	char song_path_buffer[PATH_LENGTH_MAX];
+	for (int i = 0;i < song_count;i++) {
+		//Init tag fields in song_type in case not available
+		song_array[i]->tag_track_number = 0;
+		song_array[i]->tag_title = song_array[i]->tag_album = song_array[i]->tag_artist = NULL;
+
+		//Create song rui
+		strcpy(song_path_buffer, "file://");
+		strcat(song_path_buffer, song_array[i]->filename);
+
+		//Call discover
+		GstDiscovererInfo *info = gst_discoverer_discover_uri(library_discoverer, song_path_buffer, NULL);
+		if (info == NULL) continue;
+		const GstTagList *tags = gst_discoverer_info_get_tags(info);
+		if (tags == NULL) continue;
+
+		//Get these fields
+		char* str;
+		if (gst_tag_list_get_string(tags, "title", &str)) {
+			song_array[i]->tag_title = malloc(strlen(str) + 1);
+			strcpy(song_array[i]->tag_title, str);
+			g_free(str);
+		}
+		if (gst_tag_list_get_string(tags, "album", &str)) {
+			song_array[i]->tag_album = malloc(strlen(str) + 1);
+			strcpy(song_array[i]->tag_album, str);
+			g_free(str);
+		}
+		if (gst_tag_list_get_string(tags, "artist", &str)) {
+			song_array[i]->tag_artist = malloc(strlen(str) + 1);
+			strcpy(song_array[i]->tag_artist, str);
+			g_free(str);
+		}
+		unsigned int track_number;
+		if (gst_tag_list_get_uint(tags, "track-number", &track_number)) {
+			song_array[i]->tag_track_number = track_number;
+		}
+
+		//Delete info
+		g_object_unref(info);
+	}
+}
+
+int song_track_number_compare(const void *x, const void *y) {
+	return ((*(song_type**)(x)))->tag_track_number < (*(song_type**)(y))->tag_track_number ? -1 : 1;
+}
+
+void generate_song_list(const album_type* current_album) {
 	//Init song list
 	song_list = NULL;
 	song_count = 0;
@@ -274,6 +338,12 @@ void generate_song_list(album_type* current_album) {
 		song_iter++;
 		song_last = song_last->next;
 	}
+
+	//Generate song tags
+	generate_song_tags();
+
+	//Sort with tag_track_number
+	qsort(song_array, song_count, sizeof(song_type*), song_track_number_compare);
 }
 
 void destroy_song_list() {
@@ -282,8 +352,15 @@ void destroy_song_list() {
 	while (song_list != NULL) {
 		song_type* last = song_list;
 		song_list = last->next;
+
+		//Free strings in last
 		free(last->filename);
 		free(last->song_name);
+		if (last->tag_title != NULL) free(last->tag_title);
+		if (last->tag_album != NULL) free(last->tag_album);
+		if (last->tag_artist != NULL) free(last->tag_artist);
+
+		//Free this node
 		free(last);
 	}
 }

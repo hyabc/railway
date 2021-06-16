@@ -176,6 +176,7 @@ int main(int argc, char* argv[]) {
 	destroy_song_list();
 
 	destroy_music();
+	destroy_library();
 
 	g_object_unref(builder);
 	return 0;
