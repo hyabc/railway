@@ -29,6 +29,10 @@ void music_pause_trigger() {
 	}
 }
 
+void music_volume(double value) {
+	gst_player_set_volume(music_player, value);
+}
+
 void init_music() {
 	music_player = gst_player_new(NULL, NULL);
 	music_play_state = false;

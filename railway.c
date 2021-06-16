@@ -129,6 +129,10 @@ void init_window() {
 	gtk_window_set_title(GTK_WINDOW(window), "Project Railway");
 }
 
+void control_volume_cb(GtkWidget *widget, gpointer data) {
+	music_volume(gtk_adjustment_get_value(GTK_ADJUSTMENT(widget)));
+}
+
 void init_control() {
 	GObject *button;
 	button = gtk_builder_get_object(builder, "next");
@@ -137,6 +141,10 @@ void init_control() {
 	g_signal_connect(button, "clicked", G_CALLBACK(func), NULL);
 	button = gtk_builder_get_object(builder, "play");
 	g_signal_connect(button, "clicked", G_CALLBACK(pause_button_trigger_cb), NULL);
+
+	GObject *adj;
+	adj = gtk_builder_get_object(builder, "volume_adjustment");
+	g_signal_connect(adj, "value_changed", G_CALLBACK(control_volume_cb), NULL);
 }
 
 int main(int argc, char* argv[]) {
