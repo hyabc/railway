@@ -10,7 +10,12 @@
 GtkBuilder *builder;
 
 void pause_button_trigger_cb(GtkWidget *widget, void*) {
-	music_pause_trigger();
+	bool play_state = music_pause_trigger();
+	if (play_state) {
+		gtk_button_set_label(GTK_BUTTON(widget), "⏸");
+	} else {
+		gtk_button_set_label(GTK_BUTTON(widget), "▶");
+	}
 }
 
 void func() {

@@ -19,7 +19,7 @@ void music_play(const char* filename) {
 	music_play_state = true;
 }
 
-void music_pause_trigger() {
+bool music_pause_trigger() {
 	if (music_play_state == false) {
 		gst_player_play(music_player);
 		music_play_state = true;
@@ -27,6 +27,7 @@ void music_pause_trigger() {
 		gst_player_pause(music_player);
 		music_play_state = false;
 	}
+	return music_play_state;
 }
 
 void music_volume(double value) {
