@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include "railway.h"
 #include "railwaylib.h"
+#include "railwayplaylist.h"
 #include "railwaymusic.h"
 
 GstPlayer *music_player;
@@ -52,6 +53,7 @@ void init_music() {
 	music_play_state = false;
 
 	g_signal_connect(music_player, "position-updated", G_CALLBACK(music_position_update_cb), NULL);
+	g_signal_connect(music_player, "end-of-stream", G_CALLBACK(playlist_next), NULL);
 }
 
 void destroy_music() {
