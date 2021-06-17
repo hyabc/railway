@@ -217,6 +217,7 @@ void destroy_album_list() {
 		//Free this node
 		free(last);
 	}
+	album_array = NULL;
 }
 
 void generate_song_tags() {
@@ -305,7 +306,7 @@ void generate_song_list(const album_type* current_album) {
 			exit(1);
 		}
 		current_song->next = NULL;
-		current_song->id = song_count++;
+		song_count++;
 		current_song->album_id = current_album->id;
 		current_song->filename = malloc(strlen(song_path_buffer) + 1);
 		current_song->song_name = malloc(strlen(song_name_buffer) + 1);
@@ -344,6 +345,11 @@ void generate_song_list(const album_type* current_album) {
 
 	//Sort with tag_track_number
 	qsort(song_array, song_count, sizeof(song_type*), song_track_number_compare);
+
+	//Set id
+	for (int i = 0;i < song_count;i++) {
+		song_array[i]->id = i;
+	}
 }
 
 void destroy_song_list() {
@@ -363,4 +369,5 @@ void destroy_song_list() {
 		//Free this node
 		free(last);
 	}
+	song_array = NULL;
 }

@@ -9,6 +9,7 @@
 #include "railway.h"
 #include "railwaylib.h"
 #include "railwaymusic.h"
+#include "railwayplaylist.h"
 
 GtkBuilder *builder;
 
@@ -54,11 +55,7 @@ void pause_button_trigger_cb(GtkWidget *widget, void*) {
 	}
 }
 
-void func() {
-	g_print("Hello World\n");
-}
-
-void play_song_cb(GtkWidget *widget, song_type *current_song) {
+void play_song(song_type *current_song) {
 	music_play(current_song->filename);
 
 	//Prepare text for song_info_label
@@ -97,6 +94,10 @@ void play_song_cb(GtkWidget *widget, song_type *current_song) {
 	}
 }
 
+void song_button_cb(GtkWidget *widget, song_type *current_song) {
+	playlist_play(current_song);
+}
+
 void update_songs_cb(GtkWidget *widget, album_type *current_album) {
 	//Update song list
 	destroy_song_list();
@@ -112,7 +113,7 @@ void update_songs_cb(GtkWidget *widget, album_type *current_album) {
 		gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
 		gtk_widget_set_visible(button, TRUE);
 		gtk_widget_set_size_request(button, -1, 48);
-		g_signal_connect(button, "clicked", G_CALLBACK(play_song_cb), song_array[i]);
+		g_signal_connect(button, "clicked", G_CALLBACK(song_button_cb), song_array[i]);
 
 		//Create a label in the button
 		GtkWidget *label = gtk_label_new(song_array[i]->song_name);
@@ -209,12 +210,20 @@ void control_volume_cb(GtkWidget *widget, gpointer data) {
 	music_volume(gtk_adjustment_get_value(GTK_ADJUSTMENT(widget)));
 }
 
+void control_next_cb(GtkWidget*, void*) {
+	playlist_next();
+}
+
+void control_prev_cb(GtkWidget*, void*) {
+	playlist_prev();
+}
+
 void init_control() {
 	GObject *button;
 	button = gtk_builder_get_object(builder, "next");
-	g_signal_connect(button, "clicked", G_CALLBACK(func), NULL);
+	g_signal_connect(button, "clicked", G_CALLBACK(control_next_cb), NULL);
 	button = gtk_builder_get_object(builder, "previous");
-	g_signal_connect(button, "clicked", G_CALLBACK(func), NULL);
+	g_signal_connect(button, "clicked", G_CALLBACK(control_prev_cb), NULL);
 	button = gtk_builder_get_object(builder, "play");
 	g_signal_connect(button, "clicked", G_CALLBACK(pause_button_trigger_cb), NULL);
 
@@ -236,6 +245,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	init_music();
+	init_playlist();
 	init_library();
 	init_window();
 	init_control();
@@ -249,6 +259,7 @@ int main(int argc, char* argv[]) {
 
 	destroy_music();
 	destroy_library();
+	destroy_playlist();
 
 	g_object_unref(builder);
 	return 0;
