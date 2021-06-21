@@ -308,6 +308,10 @@ bool substring_test(const char *str1, const char *str2) {
 	return false;
 }
 
+bool search_judge(album_type *current_album, const char* search_str) {
+	return substring_test(current_album->album_name, search_str) || substring_test(current_album->artist_name, search_str);
+}
+
 void search_reset_filter_cb(GtkWidget*, void*) {
 	for (int i = 0;i < album_count;i++) {
 		gtk_widget_set_visible(album_flowboxchild_array[i], TRUE);
@@ -325,7 +329,7 @@ void search_entry_changed_cb(GtkWidget*, void*) {
 	} else {
 		//Set visible or not using substring test
 		for (int i = 0;i < album_count;i++) {
-			if (substring_test(album_array[i]->album_name, search_str)) {
+			if (search_judge(album_array[i], search_str)) {
 				gtk_widget_set_visible(album_flowboxchild_array[i], TRUE);
 			} else {
 				gtk_widget_set_visible(album_flowboxchild_array[i], FALSE);
