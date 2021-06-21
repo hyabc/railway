@@ -48,15 +48,7 @@ void music_position_modify_cb(GtkWidget* widget, void*) {
 }
 
 void music_pause_button_trigger_cb(GtkWidget *widget, void*) {
-	bool play_state = music_pause_trigger();
-
-	GtkWidget *img;
-	if (play_state) {
-		img = gtk_image_new_from_icon_name("media-playback-pause-symbolic", GTK_ICON_SIZE_LARGE_TOOLBAR);
-	} else {
-		img = gtk_image_new_from_icon_name("media-playback-start-symbolic", GTK_ICON_SIZE_LARGE_TOOLBAR);
-	}
-	gtk_button_set_image(GTK_BUTTON(widget), img);
+	music_pause_trigger();
 }
 
 void play_song(song_type *current_song) {
@@ -373,7 +365,7 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 
-	init_music();
+	init_music(gtk_builder_get_object(builder, "play"));
 	init_playlist();
 	init_library();
 	init_window();

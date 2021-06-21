@@ -6,7 +6,7 @@
 
 void music_play(const char*);
 void music_volume(double);
-bool music_pause_trigger();
+void music_pause_trigger();
 GstClockTime music_duration();
 GstClockTime music_position();
 void music_seek(GstClockTime);
