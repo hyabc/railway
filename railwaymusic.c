@@ -23,19 +23,19 @@ void music_play(const char* filename) {
 void music_state_changed_cb(GstPlayer*, GstPlayerState state, GtkWidget *widget) {
 	music_play_state = state;
 	GtkWidget *img;
-	if (music_play_state == GST_PLAYER_STATE_PAUSED) {
-		img = gtk_image_new_from_icon_name("media-playback-start-symbolic", GTK_ICON_SIZE_LARGE_TOOLBAR);
-	} else {
+	if (music_play_state == GST_PLAYER_STATE_PLAYING) {
 		img = gtk_image_new_from_icon_name("media-playback-pause-symbolic", GTK_ICON_SIZE_LARGE_TOOLBAR);
+	} else {
+		img = gtk_image_new_from_icon_name("media-playback-start-symbolic", GTK_ICON_SIZE_LARGE_TOOLBAR);
 	}
 	gtk_button_set_image(GTK_BUTTON(widget), img);
 }
 
 void music_pause_trigger() {
-	if (music_play_state == GST_PLAYER_STATE_PAUSED) {
-		gst_player_play(music_player);
-	} else if (music_play_state == GST_PLAYER_STATE_PLAYING) {
+	if (music_play_state == GST_PLAYER_STATE_PLAYING) {
 		gst_player_pause(music_player);
+	} else {
+		gst_player_play(music_player);
 	}
 }
 
