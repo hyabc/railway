@@ -113,9 +113,14 @@ void update_songs_cb(GtkWidget *widget, album_type *current_album) {
 	GtkWidget *songs = GTK_WIDGET(gtk_builder_get_object(builder, "songs"));
 	gtk_container_foreach(GTK_CONTAINER(songs), (GtkCallback)(gtk_widget_destroy), NULL);
 	for (int i = 0;i < song_count;i++) {
+		//Create a listboxrow
+		GtkWidget *listboxrow = gtk_list_box_row_new();
+		gtk_container_add(GTK_CONTAINER(songs), listboxrow);
+		gtk_widget_set_visible(listboxrow, TRUE);
+
 		//Create a button
 		GtkWidget *button = gtk_button_new();
-		gtk_container_add(GTK_CONTAINER(songs), button);
+		gtk_container_add(GTK_CONTAINER(listboxrow), button);
 		gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
 		gtk_widget_set_visible(button, TRUE);
 		gtk_widget_set_size_request(button, -1, 48);
@@ -126,6 +131,15 @@ void update_songs_cb(GtkWidget *widget, album_type *current_album) {
 		gtk_container_add(GTK_CONTAINER(button), label);
 		gtk_label_set_xalign(GTK_LABEL(label), 0);
 		gtk_widget_set_visible(label, TRUE);
+
+		//Set button not to focus
+		GValue val = G_VALUE_INIT;
+		g_value_init(&val, G_TYPE_BOOLEAN);
+		g_value_set_boolean(&val, FALSE);
+		g_object_set_property(G_OBJECT(button), "can-focus", &val);
+		g_object_set_property(G_OBJECT(label), "can-focus", &val);
+		g_object_set_property(G_OBJECT(listboxrow), "can-focus", &val);
+		g_value_unset(&val);
 	}
 }
 
@@ -173,9 +187,14 @@ void init_albums() {
 	//Create buttons
 	GtkWidget *albums_widget = GTK_WIDGET(gtk_builder_get_object(builder, "albums"));
 	for (int i = 0;i < album_count;i++) {
+		//Create a flowboxchild
+		GtkWidget *flowboxchild = gtk_flow_box_child_new();
+		gtk_container_add(GTK_CONTAINER(albums_widget), flowboxchild);
+		gtk_widget_set_visible(flowboxchild, TRUE);
+
 		//Create a box
 		GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-		gtk_container_add(GTK_CONTAINER(albums_widget), box);
+		gtk_container_add(GTK_CONTAINER(flowboxchild), box);
 		gtk_widget_set_visible(box, TRUE);
 
 		//Create a button in the box
@@ -194,6 +213,16 @@ void init_albums() {
 		gtk_label_set_max_width_chars(GTK_LABEL(label), 15);
 		gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
 		gtk_widget_set_visible(label, TRUE);
+
+		//Set button not to focus
+		GValue val = G_VALUE_INIT;
+		g_value_init(&val, G_TYPE_BOOLEAN);
+		g_value_set_boolean(&val, FALSE);
+		g_object_set_property(G_OBJECT(button), "can-focus", &val);
+		g_object_set_property(G_OBJECT(label), "can-focus", &val);
+		g_object_set_property(G_OBJECT(box), "can-focus", &val);
+		g_object_set_property(G_OBJECT(flowboxchild), "can-focus", &val);
+		g_value_unset(&val);
 		
 		//Create task for each album
 		album_image_tasks[i] = g_task_new(button, NULL, (GAsyncReadyCallback)(album_image_draw_cb), album_image_tasks);
