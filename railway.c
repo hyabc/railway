@@ -295,6 +295,7 @@ void control_search_button_cb(GtkWidget*, void*) {
 
 bool substring_test(const char *str1, const char *str2) {
 	size_t len1 = strlen(str1), len2 = strlen(str2);
+	if (len1 < len2) return false;
 	for (int i = 0;i < len1 - len2 + 1;i++) {
 		bool success = true;
 		for (int j = 0;j < len2;j++) {
