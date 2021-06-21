@@ -209,7 +209,10 @@ void init_albums() {
 		gtk_container_add(GTK_CONTAINER(albums_widget), flowboxchild);
 		gtk_widget_set_visible(flowboxchild, TRUE);
 
+		//Store this flowboxchild
 		album_flowboxchild_array[i] = flowboxchild;
+		gtk_widget_set_margin_top(flowboxchild, 10);
+		gtk_widget_set_margin_bottom(flowboxchild, 10);
 
 		//Create a box
 		GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -232,6 +235,18 @@ void init_albums() {
 		gtk_label_set_max_width_chars(GTK_LABEL(label), 15);
 		gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
 		gtk_widget_set_visible(label, TRUE);
+
+		//Create a label about artist name in the box
+		GtkWidget *artist_label = gtk_label_new(NULL);
+		gtk_container_add(GTK_CONTAINER(box), artist_label);
+		gtk_label_set_max_width_chars(GTK_LABEL(artist_label), 15);
+		gtk_label_set_line_wrap(GTK_LABEL(artist_label), TRUE);
+		gtk_widget_set_visible(artist_label, TRUE);
+
+		//Set italic text
+		char* artist_markup = g_markup_printf_escaped("<span style=\"italic\" size=\"smaller\">\%s</span>", album_array[i]->artist_name);
+		gtk_label_set_markup(GTK_LABEL(artist_label), artist_markup);
+		g_free(artist_markup);
 
 		//Set button not to focus
 		GValue val = G_VALUE_INIT;
