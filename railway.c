@@ -84,13 +84,19 @@ void play_song(song_type *current_song) {
 	strcat(image_path_buffer, album_array[current_song->album_id]->album_name);
 	strcat(image_path_buffer, ".jpg");
 
+	//Prepare song_info_image widget
+	GtkWidget *widget = GTK_WIDGET(gtk_builder_get_object(builder, "song_info_image"));
+	g_signal_connect(widget, "clicked", G_CALLBACK(update_songs_cb), album_array[current_song->album_id]);
+
 	//Create pixbuf
 	GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file_at_scale(image_path_buffer, 80, 80, FALSE, NULL);
 	if (pixbuf != NULL) {
 		//Apply image to song_info_image
-		GtkWidget *song_info_image = GTK_WIDGET(gtk_builder_get_object(builder, "song_info_image"));
-		gtk_image_set_from_pixbuf(GTK_IMAGE(song_info_image), pixbuf);
-		gtk_widget_set_visible(song_info_image, TRUE);
+		GtkWidget *image = gtk_image_new_from_pixbuf(pixbuf);
+		gtk_button_set_image(GTK_BUTTON(widget), image);
+		gtk_widget_set_visible(image, TRUE);
+	} else {
+		gtk_button_set_image(GTK_BUTTON(widget), NULL);
 	}
 }
 
