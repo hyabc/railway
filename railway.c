@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <math.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <fcntl.h>
 #include "railway.h"
 #include "railwaylib.h"
@@ -46,7 +47,7 @@ void music_position_modify_cb(GtkWidget* widget, void*) {
 	}
 }
 
-void pause_button_trigger_cb(GtkWidget *widget, void*) {
+void music_pause_button_trigger_cb(GtkWidget *widget, void*) {
 	bool play_state = music_pause_trigger();
 	if (play_state) {
 		gtk_button_set_label(GTK_BUTTON(widget), "⏸");
@@ -86,7 +87,7 @@ void play_song(song_type *current_song) {
 
 	//Prepare song_info_image widget
 	GtkWidget *widget = GTK_WIDGET(gtk_builder_get_object(builder, "song_info_image"));
-	g_signal_connect(widget, "clicked", G_CALLBACK(update_songs_cb), album_array[current_song->album_id]);
+	g_signal_connect(widget, "clicked", G_CALLBACK(song_update_cb), album_array[current_song->album_id]);
 
 	//Create pixbuf
 	GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file_at_scale(image_path_buffer, 80, 80, FALSE, NULL);
@@ -104,7 +105,7 @@ void song_button_cb(GtkWidget *widget, song_type *current_song) {
 	playlist_play(current_song);
 }
 
-void update_songs_cb(GtkWidget *widget, album_type *current_album) {
+void song_update_cb(GtkWidget *widget, album_type *current_album) {
 	//Update song list
 	destroy_song_list();
 	generate_song_list(current_album);
@@ -112,6 +113,7 @@ void update_songs_cb(GtkWidget *widget, album_type *current_album) {
 	//Reset song widget
 	GtkWidget *songs = GTK_WIDGET(gtk_builder_get_object(builder, "songs"));
 	gtk_container_foreach(GTK_CONTAINER(songs), (GtkCallback)(gtk_widget_destroy), NULL);
+
 	for (int i = 0;i < song_count;i++) {
 		//Create a listboxrow
 		GtkWidget *listboxrow = gtk_list_box_row_new();
@@ -176,10 +178,22 @@ void album_image_draw_cb(GtkWidget *widget, void*, GTask **album_image_tasks, vo
 	}
 }
 
+GtkWidget **album_flowboxchild_array;
+
+void destroy_albums() {
+	free(album_flowboxchild_array);
+}
+
 void init_albums() {
 	//Init gtask array
 	GTask **album_image_tasks = malloc(sizeof(GTask*) * album_count);
 	if (album_image_tasks == NULL) {
+		fprintf(stderr, "Insufficient memory\n");
+		exit(1);
+	}
+
+	album_flowboxchild_array = malloc(sizeof(GtkWidget*) * album_count);
+	if (album_flowboxchild_array == NULL) {
 		fprintf(stderr, "Insufficient memory\n");
 		exit(1);
 	}
@@ -191,6 +205,8 @@ void init_albums() {
 		GtkWidget *flowboxchild = gtk_flow_box_child_new();
 		gtk_container_add(GTK_CONTAINER(albums_widget), flowboxchild);
 		gtk_widget_set_visible(flowboxchild, TRUE);
+
+		album_flowboxchild_array[i] = flowboxchild;
 
 		//Create a box
 		GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -205,7 +221,7 @@ void init_albums() {
 		gtk_widget_set_margin_end(button, 5);
 		gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
 		gtk_widget_set_visible(button, TRUE);
-		g_signal_connect(button, "clicked", G_CALLBACK(update_songs_cb), album_array[i]);
+		g_signal_connect(button, "clicked", G_CALLBACK(song_update_cb), album_array[i]);
 
 		//Create a label in the box
 		GtkWidget *label = gtk_label_new(album_array[i]->album_name);
@@ -253,6 +269,53 @@ void control_prev_cb(GtkWidget*, void*) {
 	playlist_prev();
 }
 
+void control_search_button_cb(GtkWidget*, void*) {
+	//Activate searchbar
+	GObject *searchbar = gtk_builder_get_object(builder, "searchbar");
+	gtk_search_bar_set_search_mode(GTK_SEARCH_BAR(searchbar), TRUE);
+}
+
+bool substring_test(const char *str1, const char *str2) {
+	size_t len1 = strlen(str1), len2 = strlen(str2);
+	for (int i = 0;i < len1 - len2 + 1;i++) {
+		bool success = true;
+		for (int j = 0;j < len2;j++) {
+			if (tolower(str1[i + j]) != tolower(str2[j])) {
+				success = false;
+				break;
+			}
+		}
+		if (success) return true;
+	}
+	return false;
+}
+
+void search_reset_filter_cb(GtkWidget*, void*) {
+	for (int i = 0;i < album_count;i++) {
+		gtk_widget_set_visible(album_flowboxchild_array[i], TRUE);
+	}
+}
+
+void search_entry_changed_cb(GtkWidget*, void*) {
+	//Get search string
+	GtkEntryBuffer *buffer = GTK_ENTRY_BUFFER(gtk_builder_get_object(builder, "search_text"));
+	const char *search_str = gtk_entry_buffer_get_text(buffer);
+
+	if (strcmp(search_str, "") == 0) {
+		//Empty search filter
+		search_reset_filter_cb(NULL, NULL);
+	} else {
+		//Set visible or not using substring test
+		for (int i = 0;i < album_count;i++) {
+			if (substring_test(album_array[i]->album_name, search_str)) {
+				gtk_widget_set_visible(album_flowboxchild_array[i], TRUE);
+			} else {
+				gtk_widget_set_visible(album_flowboxchild_array[i], FALSE);
+			}
+		}
+	}
+}
+
 void init_control() {
 	GObject *button;
 	button = gtk_builder_get_object(builder, "next");
@@ -260,7 +323,15 @@ void init_control() {
 	button = gtk_builder_get_object(builder, "previous");
 	g_signal_connect(button, "clicked", G_CALLBACK(control_prev_cb), NULL);
 	button = gtk_builder_get_object(builder, "play");
-	g_signal_connect(button, "clicked", G_CALLBACK(pause_button_trigger_cb), NULL);
+	g_signal_connect(button, "clicked", G_CALLBACK(music_pause_button_trigger_cb), NULL);
+
+	button = gtk_builder_get_object(builder, "search_button");
+	g_signal_connect(button, "clicked", G_CALLBACK(control_search_button_cb), NULL);
+
+	GObject *searchentry;
+	searchentry = gtk_builder_get_object(builder, "searchentry");
+	g_signal_connect(searchentry, "search-changed", G_CALLBACK(search_entry_changed_cb), NULL);
+	g_signal_connect(searchentry, "stop-search", G_CALLBACK(search_reset_filter_cb), NULL);
 
 	GObject *vol_adj, *playback_adj;
 	vol_adj = gtk_builder_get_object(builder, "volume_adjustment");
@@ -295,6 +366,7 @@ int main(int argc, char* argv[]) {
 	destroy_music();
 	destroy_library();
 	destroy_playlist();
+	destroy_albums();
 
 	g_object_unref(builder);
 	return 0;
