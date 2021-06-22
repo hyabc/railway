@@ -31,6 +31,11 @@
     <property name="icon-name">edit-find-symbolic</property>
   </object>
   <object class="GtkEntryBuffer" id="search_text"/>
+  <object class="GtkImage" id="shuffle_icon">
+    <property name="visible">True</property>
+    <property name="can-focus">False</property>
+    <property name="icon-name">media-playlist-shuffle-symbolic</property>
+  </object>
   <object class="GtkAdjustment" id="volume_adjustment">
     <property name="upper">1</property>
     <property name="value">1</property>
@@ -335,6 +340,23 @@
               </packing>
             </child>
             <child>
+              <object class="GtkToggleButton" id="shuffle_toggle">
+                <property name="width-request">48</property>
+                <property name="height-request">48</property>
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+                <property name="receives-default">True</property>
+                <property name="halign">start</property>
+                <property name="valign">center</property>
+                <property name="image">shuffle_icon</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkVolumeButton">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
@@ -370,7 +392,7 @@ audio-volume-medium-symbolic</property>
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="position">2</property>
+                <property name="position">3</property>
               </packing>
             </child>
           </object>

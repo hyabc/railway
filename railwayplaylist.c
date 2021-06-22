@@ -1,9 +1,13 @@
 #include "railwaylib.h"
 #include "railway.h"
+#include <stdlib.h>
+#include <time.h>
+#include <stdbool.h>
 
 song_type **playlist_array;
 int playlist_count;
 int playlist_ptr;
+bool playlist_is_shuffle;
 
 void generate_playlist() {
 	playlist_count = song_count;
@@ -57,6 +61,7 @@ void init_playlist() {
 	playlist_array = NULL;
 	playlist_count = 0;
 	playlist_ptr = 0;
+	srand(time(0));
 }
 
 void destroy_playlist() {
@@ -85,8 +90,20 @@ void playlist_play(song_type *current_song) {
 }
 
 void playlist_next() {
-	if (playlist_ptr + 1 < playlist_count) {
-		playlist_ptr++;
+	if (!playlist_is_shuffle) {
+		if (playlist_ptr + 1 < playlist_count) {
+			playlist_ptr++;
+			play_song(playlist_array[playlist_ptr]);
+		}
+	} else {
+		//Generate random id
+		int rand_ptr = rand() % playlist_count;
+
+		//Avoid same song as currently playing song, if possible
+		while (playlist_count > 1 && rand_ptr == playlist_ptr) {
+			rand_ptr = rand() % playlist_count;
+		}
+		playlist_ptr = rand_ptr;
 		play_song(playlist_array[playlist_ptr]);
 	}
 }
@@ -96,4 +113,8 @@ void playlist_prev() {
 		playlist_ptr--;
 		play_song(playlist_array[playlist_ptr]);
 	}
+}
+
+void playlist_set_shuffle(bool is_shuffle) {
+	playlist_is_shuffle = is_shuffle;
 }

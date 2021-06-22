@@ -331,6 +331,10 @@ void search_entry_changed_cb(GtkWidget*, void*) {
 	}
 }
 
+void control_toggle_cb(GtkWidget *toggle, void*) {
+	playlist_set_shuffle(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(toggle)));
+}
+
 void init_control() {
 	GObject *button;
 	button = gtk_builder_get_object(builder, "next");
@@ -347,6 +351,10 @@ void init_control() {
 	searchentry = gtk_builder_get_object(builder, "searchentry");
 	g_signal_connect(searchentry, "search-changed", G_CALLBACK(search_entry_changed_cb), NULL);
 	g_signal_connect(searchentry, "stop-search", G_CALLBACK(search_reset_filter_cb), NULL);
+
+	GObject *toggle;
+	toggle = gtk_builder_get_object(builder, "shuffle_toggle");
+	g_signal_connect(toggle, "toggled", G_CALLBACK(control_toggle_cb), NULL);
 
 	GObject *vol_adj, *playback_adj;
 	vol_adj = gtk_builder_get_object(builder, "volume_adjustment");
