@@ -61,6 +61,7 @@ void init_playlist() {
 	playlist_array = NULL;
 	playlist_count = 0;
 	playlist_ptr = 0;
+	playlist_is_shuffle = playlist_is_repeat = false;
 	srand(time(0));
 }
 
@@ -77,7 +78,6 @@ void destroy_playlist() {
 	playlist_array = NULL;
 	playlist_count = 0;
 	playlist_ptr = 0;
-	playlist_is_shuffle = playlist_is_repeat = false;
 }
 
 void playlist_play(song_type *current_song) {
