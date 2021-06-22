@@ -7,7 +7,7 @@
 song_type **playlist_array;
 int playlist_count;
 int playlist_ptr;
-bool playlist_is_shuffle;
+bool playlist_is_shuffle, playlist_is_repeat;
 
 void generate_playlist() {
 	playlist_count = song_count;
@@ -77,6 +77,7 @@ void destroy_playlist() {
 	playlist_array = NULL;
 	playlist_count = 0;
 	playlist_ptr = 0;
+	playlist_is_shuffle = playlist_is_repeat = false;
 }
 
 void playlist_play(song_type *current_song) {
@@ -93,6 +94,10 @@ void playlist_next() {
 	if (!playlist_is_shuffle) {
 		if (playlist_ptr + 1 < playlist_count) {
 			playlist_ptr++;
+			play_song(playlist_array[playlist_ptr]);
+		} else if (playlist_is_repeat) {
+			//Go back to song 0
+			playlist_ptr = 0;
 			play_song(playlist_array[playlist_ptr]);
 		}
 	} else {
@@ -117,4 +122,8 @@ void playlist_prev() {
 
 void playlist_set_shuffle(bool is_shuffle) {
 	playlist_is_shuffle = is_shuffle;
+}
+
+void playlist_set_repeat(bool is_repeat) {
+	playlist_is_repeat = is_repeat;
 }

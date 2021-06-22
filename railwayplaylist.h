@@ -10,5 +10,6 @@ void destroy_playlist();
 void playlist_next();
 void playlist_prev();
 void playlist_set_shuffle(bool);
+void playlist_set_repeat(bool);
 
 #endif

@@ -25,6 +25,11 @@
     <property name="icon-name">media-skip-backward-symbolic</property>
     <property name="icon_size">3</property>
   </object>
+  <object class="GtkImage" id="repeat_icon">
+    <property name="visible">True</property>
+    <property name="can-focus">False</property>
+    <property name="icon-name">media-playlist-repeat-symbolic</property>
+  </object>
   <object class="GtkImage" id="search_icon">
     <property name="visible">True</property>
     <property name="can-focus">False</property>
@@ -340,11 +345,28 @@
               </packing>
             </child>
             <child>
+              <object class="GtkToggleButton" id="repeat_toggle">
+                <property name="width-request">48</property>
+                <property name="height-request">48</property>
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="receives-default">True</property>
+                <property name="halign">start</property>
+                <property name="valign">center</property>
+                <property name="image">repeat_icon</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkToggleButton" id="shuffle_toggle">
                 <property name="width-request">48</property>
                 <property name="height-request">48</property>
                 <property name="visible">True</property>
-                <property name="can-focus">True</property>
+                <property name="can-focus">False</property>
                 <property name="receives-default">True</property>
                 <property name="halign">start</property>
                 <property name="valign">center</property>
@@ -353,7 +375,7 @@
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="position">2</property>
+                <property name="position">3</property>
               </packing>
             </child>
             <child>
@@ -392,7 +414,7 @@ audio-volume-medium-symbolic</property>
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="position">3</property>
+                <property name="position">4</property>
               </packing>
             </child>
           </object>
