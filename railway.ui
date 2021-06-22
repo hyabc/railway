@@ -304,7 +304,6 @@
                         <property name="margin-start">20</property>
                         <property name="margin-end">20</property>
                         <attributes>
-                          <attribute name="weight" value="bold"/>
                           <attribute name="scale" value="1.25"/>
                         </attributes>
                       </object>
