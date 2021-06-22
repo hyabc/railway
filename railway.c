@@ -51,6 +51,17 @@ void music_pause_button_trigger_cb(GtkWidget *widget, void*) {
 	music_pause_trigger();
 }
 
+void music_pause_button_icon_update() {
+	GtkWidget *img;
+	if (music_is_playing()) {
+		img = gtk_image_new_from_icon_name("media-playback-pause-symbolic", GTK_ICON_SIZE_LARGE_TOOLBAR);
+	} else {
+		img = gtk_image_new_from_icon_name("media-playback-start-symbolic", GTK_ICON_SIZE_LARGE_TOOLBAR);
+	}
+	GObject *pause_button = gtk_builder_get_object(builder, "play");
+	gtk_button_set_image(GTK_BUTTON(pause_button), img);
+}
+
 void play_song(song_type *current_song) {
 	music_play(current_song->filename);
 
@@ -123,8 +134,24 @@ void song_update_cb(GtkWidget *widget, album_type *current_album) {
 		gtk_widget_set_size_request(button, -1, 48);
 		g_signal_connect(button, "clicked", G_CALLBACK(song_button_cb), song_array[i]);
 
+		//Generate song name
+		char song_name_buffer[NAME_LENGTH_MAX];
+		strcpy(song_name_buffer, "");
+		if (song_array[i]->tag_title != NULL) {
+			strcat(song_name_buffer, song_array[i]->tag_title);
+		} else {
+			strcat(song_name_buffer, "?");
+		}
+		strcat(song_name_buffer, " (");
+		if (song_array[i]->tag_artist != NULL) {
+			strcat(song_name_buffer, song_array[i]->tag_artist);
+		} else {
+			strcat(song_name_buffer, "?");
+		}
+		strcat(song_name_buffer, ")");
+
 		//Create a label in the button
-		GtkWidget *label = gtk_label_new(song_array[i]->song_name);
+		GtkWidget *label = gtk_label_new(song_name_buffer);
 		gtk_container_add(GTK_CONTAINER(button), label);
 		gtk_label_set_xalign(GTK_LABEL(label), 0);
 		gtk_widget_set_visible(label, TRUE);
@@ -379,7 +406,7 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 
-	init_music(gtk_builder_get_object(builder, "play"));
+	init_music();
 	init_playlist();
 	init_library();
 	init_window();

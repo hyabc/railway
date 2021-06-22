@@ -22,21 +22,19 @@ void music_play(const char* filename) {
 
 void music_state_changed_cb(GstPlayer*, GstPlayerState state, GtkWidget *widget) {
 	music_play_state = state;
-	GtkWidget *img;
-	if (music_play_state == GST_PLAYER_STATE_PLAYING) {
-		img = gtk_image_new_from_icon_name("media-playback-pause-symbolic", GTK_ICON_SIZE_LARGE_TOOLBAR);
-	} else {
-		img = gtk_image_new_from_icon_name("media-playback-start-symbolic", GTK_ICON_SIZE_LARGE_TOOLBAR);
-	}
-	gtk_button_set_image(GTK_BUTTON(widget), img);
+	music_pause_button_icon_update();
 }
 
 void music_pause_trigger() {
-	if (music_play_state == GST_PLAYER_STATE_PLAYING) {
+	if (music_is_playing()) {
 		gst_player_pause(music_player);
 	} else {
 		gst_player_play(music_player);
 	}
+}
+
+bool music_is_playing() {
+	return music_play_state == GST_PLAYER_STATE_PLAYING;
 }
 
 void music_volume(double value) {
@@ -55,12 +53,12 @@ void music_seek(GstClockTime time) {
 	gst_player_seek(music_player, time);
 }
 
-void init_music(GtkWidget *button) {
+void init_music() {
 	music_player = gst_player_new(NULL, NULL);
 
 	g_signal_connect(music_player, "position-updated", G_CALLBACK(music_position_update_cb), NULL);
 	g_signal_connect(music_player, "end-of-stream", G_CALLBACK(playlist_next), NULL);
-	g_signal_connect(music_player, "state-changed", G_CALLBACK(music_state_changed_cb), button);
+	g_signal_connect(music_player, "state-changed", G_CALLBACK(music_state_changed_cb), NULL);
 }
 
 void destroy_music() {
