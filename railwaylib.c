@@ -225,6 +225,7 @@ void generate_song_tags() {
 	for (int i = 0;i < song_count;i++) {
 		//Init tag fields in song_type in case not available
 		song_array[i]->tag_track_number = 0;
+		song_array[i]->tag_disc_number = 0;
 		song_array[i]->tag_title = song_array[i]->tag_album = song_array[i]->tag_artist = NULL;
 
 		//Create song rui
@@ -254,9 +255,12 @@ void generate_song_tags() {
 			strcpy(song_array[i]->tag_artist, str);
 			g_free(str);
 		}
-		unsigned int track_number;
+		unsigned int track_number, disc_number;
 		if (gst_tag_list_get_uint(tags, "track-number", &track_number)) {
 			song_array[i]->tag_track_number = track_number;
+		}
+		if (gst_tag_list_get_uint(tags, "album-disc-number", &disc_number)) {
+			song_array[i]->tag_disc_number = disc_number;
 		}
 
 		//Delete info
@@ -265,7 +269,10 @@ void generate_song_tags() {
 }
 
 int song_track_number_compare(const void *x, const void *y) {
-	return ((*(song_type**)(x)))->tag_track_number < (*(song_type**)(y))->tag_track_number ? -1 : 1;
+	if (((*(song_type**)(x)))->tag_disc_number != ((*(song_type**)(y)))->tag_disc_number)
+		return ((*(song_type**)(x)))->tag_disc_number < ((*(song_type**)(y)))->tag_disc_number ? -1 : 1;
+	else
+		return ((*(song_type**)(x)))->tag_track_number < (*(song_type**)(y))->tag_track_number ? -1 : 1;
 }
 
 void generate_song_list(const album_type* current_album) {

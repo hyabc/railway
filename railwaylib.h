@@ -20,7 +20,7 @@ typedef struct song_type {
 	char *song_name;
 	struct song_type *next;
 	char *tag_title, *tag_album, *tag_artist;
-	int tag_track_number;
+	int tag_track_number, tag_disc_number;
 } song_type;
 
 extern size_t album_count, song_count;
