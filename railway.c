@@ -18,6 +18,7 @@ void music_position_update_cb(GstPlayer*, GstClockTime, void*) {
 	//Get time
 	int position_sec = GST_TIME_AS_SECONDS(music_position());
 	int duration_sec = GST_TIME_AS_SECONDS(music_duration());
+	if (duration_sec == 0) return;
 	double progress = (double)(position_sec) / (double)(duration_sec);
 
 	//Update playback
@@ -38,6 +39,7 @@ void music_position_modify_cb(GtkWidget* widget, void*) {
 	//Get time
 	int position_sec = GST_TIME_AS_SECONDS(music_position());
 	int duration_sec = GST_TIME_AS_SECONDS(music_duration());
+	if (duration_sec == 0) return;
 	double progress = (double)(position_sec) / (double)(duration_sec);
 	double new_progress = gtk_adjustment_get_value(GTK_ADJUSTMENT(widget));
 
