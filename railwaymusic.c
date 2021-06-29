@@ -22,7 +22,6 @@ void music_play(const char* filename) {
 
 void music_state_changed_cb(GstPlayer*, GstPlayerState state, GtkWidget *widget) {
 	music_play_state = state;
-	music_pause_button_icon_update();
 }
 
 void music_pause_trigger() {

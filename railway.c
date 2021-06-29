@@ -48,18 +48,18 @@ void music_position_modify_cb(GtkWidget* widget, void*) {
 }
 
 void music_pause_button_trigger_cb(GtkWidget *widget, void*) {
-	music_pause_trigger();
-}
-
-void music_pause_button_icon_update() {
+	//Set pause_icon status
 	GtkWidget *img;
 	if (music_is_playing()) {
-		img = gtk_image_new_from_icon_name("media-playback-pause-symbolic", GTK_ICON_SIZE_LARGE_TOOLBAR);
-	} else {
 		img = gtk_image_new_from_icon_name("media-playback-start-symbolic", GTK_ICON_SIZE_LARGE_TOOLBAR);
+	} else {
+		img = gtk_image_new_from_icon_name("media-playback-pause-symbolic", GTK_ICON_SIZE_LARGE_TOOLBAR);
 	}
 	GObject *pause_button = gtk_builder_get_object(builder, "play");
 	gtk_button_set_image(GTK_BUTTON(pause_button), img);
+
+	//Trigger pause
+	music_pause_trigger();
 }
 
 void play_song(song_type *current_song) {
@@ -96,6 +96,11 @@ void play_song(song_type *current_song) {
 	} else {
 		gtk_button_set_image(GTK_BUTTON(widget), NULL);
 	}
+
+	//Set pause_icon status
+	GObject *pause_button = gtk_builder_get_object(builder, "play");
+	GtkWidget *img = gtk_image_new_from_icon_name("media-playback-pause-symbolic", GTK_ICON_SIZE_LARGE_TOOLBAR);
+	gtk_button_set_image(GTK_BUTTON(pause_button), img);
 }
 
 void song_button_cb(GtkWidget *widget, song_type *current_song) {
