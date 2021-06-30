@@ -33,6 +33,8 @@ void music_position_update_cb(GstPlayer*, GstClockTime, void*) {
 	//Set song_position_label
 	GtkWidget *song_position_label = GTK_WIDGET(gtk_builder_get_object(builder, "song_position_label"));
 	gtk_label_set_text(GTK_LABEL(song_position_label), duration_buffer);
+
+	if (position_sec >= duration_sec) playlist_next();
 }
 
 void music_position_modify_cb(GtkWidget* widget, void*) {

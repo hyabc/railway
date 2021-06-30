@@ -56,7 +56,6 @@ void init_music() {
 	music_player = gst_player_new(NULL, NULL);
 
 	g_signal_connect(music_player, "position-updated", G_CALLBACK(music_position_update_cb), NULL);
-	g_signal_connect(music_player, "end-of-stream", G_CALLBACK(playlist_next), NULL);
 	g_signal_connect(music_player, "state-changed", G_CALLBACK(music_state_changed_cb), NULL);
 }
 
