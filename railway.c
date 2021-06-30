@@ -14,40 +14,17 @@
 
 GtkBuilder *builder;
 
-void music_position_update_cb(GstPlayer*, GstClockTime, void*) {
+void music_position_update_cb(GstPlayer*, GstClockTime time, int* duration) {
 	//Get time
-	int position_sec = GST_TIME_AS_SECONDS(music_position());
-	int duration_sec = GST_TIME_AS_SECONDS(music_duration());
+	int position_sec = GST_TIME_AS_SECONDS(time);
+	int duration_sec = *duration;
 	if (duration_sec == 0) return;
 	double progress = (double)(position_sec) / (double)(duration_sec);
 
 	//Update playback
-	GObject *playback_adj;
-	playback_adj = gtk_builder_get_object(builder, "playback_adjustment");
-	gtk_adjustment_set_value(GTK_ADJUSTMENT(playback_adj), progress);
-
-	//Prepare duration text
-	char duration_buffer[NAME_LENGTH_MAX];
-	sprintf(duration_buffer, "%02d:%02d/%02d:%02d", position_sec / 60, position_sec % 60, duration_sec / 60, duration_sec % 60);
-
-	//Set song_position_label
-	GtkWidget *song_position_label = GTK_WIDGET(gtk_builder_get_object(builder, "song_position_label"));
-	gtk_label_set_text(GTK_LABEL(song_position_label), duration_buffer);
-
-	if (position_sec >= duration_sec) playlist_next();
-}
-
-void music_position_modify_cb(GtkWidget* widget, void*) {
-	//Get time
-	int position_sec = GST_TIME_AS_SECONDS(music_position());
-	int duration_sec = GST_TIME_AS_SECONDS(music_duration());
-	if (duration_sec == 0) return;
-	double progress = (double)(position_sec) / (double)(duration_sec);
-	double new_progress = gtk_adjustment_get_value(GTK_ADJUSTMENT(widget));
-
-	//Update position if needed
-	if (fabs(progress - new_progress) > 0.01) {
-		music_seek(new_progress * music_duration());
+	if (0 <= progress && progress <= 1) {
+		GObject *playback_adj = gtk_builder_get_object(builder, "playback_adjustment");
+		gtk_adjustment_set_value(GTK_ADJUSTMENT(playback_adj), progress);
 	}
 }
 
@@ -64,47 +41,6 @@ void music_pause_button_trigger_cb(GtkWidget *widget, void*) {
 
 	//Trigger pause
 	music_pause_trigger();
-}
-
-void play_song(song_type *current_song) {
-	music_play(current_song->filename);
-
-	//Prepare song info markup
-	char* song_info_markup = g_markup_printf_escaped("<span weight=\"bold\">%s</span> by <span weight=\"bold\">%s</span>", current_song->tag_title != NULL ? current_song->tag_title : "unknown", current_song->tag_artist != NULL ? current_song->tag_artist : "unknown");
-
-	//Set song_info_label
-	GtkWidget *song_info_label = GTK_WIDGET(gtk_builder_get_object(builder, "song_info_label"));
-	gtk_label_set_markup(GTK_LABEL(song_info_label), song_info_markup);
-
-	//Free markup string
-	g_free(song_info_markup);
-
-	//Create image path
-	char image_path_buffer[PATH_LENGTH_MAX];
-	strcpy(image_path_buffer, album_cache_path);
-	strcat(image_path_buffer, "/");
-	strcat(image_path_buffer, album_array[current_song->album_id]->album_name);
-	strcat(image_path_buffer, ".jpg");
-
-	//Prepare song_info_image widget
-	GtkWidget *widget = GTK_WIDGET(gtk_builder_get_object(builder, "song_info_image"));
-	g_signal_connect(widget, "clicked", G_CALLBACK(song_update_cb), album_array[current_song->album_id]);
-
-	//Create pixbuf
-	GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file_at_scale(image_path_buffer, 80, 80, FALSE, NULL);
-	if (pixbuf != NULL) {
-		//Apply image to song_info_image
-		GtkWidget *image = gtk_image_new_from_pixbuf(pixbuf);
-		gtk_button_set_image(GTK_BUTTON(widget), image);
-		gtk_widget_set_visible(image, TRUE);
-	} else {
-		gtk_button_set_image(GTK_BUTTON(widget), NULL);
-	}
-
-	//Set pause_icon status
-	GObject *pause_button = gtk_builder_get_object(builder, "play");
-	GtkWidget *img = gtk_image_new_from_icon_name("media-playback-pause-symbolic", GTK_ICON_SIZE_LARGE_TOOLBAR);
-	gtk_button_set_image(GTK_BUTTON(pause_button), img);
 }
 
 void song_button_cb(GtkWidget *widget, song_type *current_song) {
@@ -156,6 +92,56 @@ void song_update_cb(GtkWidget *widget, album_type *current_album) {
 		g_object_set_property(G_OBJECT(listboxrow), "can-focus", &val);
 		g_value_unset(&val);
 	}
+}
+
+void play_song(song_type *current_song) {
+	music_play(current_song);
+
+	//Prepare song info markup
+	char* song_info_markup = g_markup_printf_escaped("<span weight=\"bold\">%s</span> by <span weight=\"bold\">%s</span>", current_song->tag_title != NULL ? current_song->tag_title : "unknown", current_song->tag_artist != NULL ? current_song->tag_artist : "unknown");
+
+	//Set song_info_label
+	GtkWidget *song_info_label = GTK_WIDGET(gtk_builder_get_object(builder, "song_info_label"));
+	gtk_label_set_markup(GTK_LABEL(song_info_label), song_info_markup);
+
+	//Free markup string
+	g_free(song_info_markup);
+
+	//Create image path
+	char image_path_buffer[PATH_LENGTH_MAX];
+	strcpy(image_path_buffer, album_cache_path);
+	strcat(image_path_buffer, "/");
+	strcat(image_path_buffer, album_array[current_song->album_id]->album_name);
+	strcat(image_path_buffer, ".jpg");
+
+	//Prepare song_info_image widget
+	GtkWidget *widget = GTK_WIDGET(gtk_builder_get_object(builder, "song_info_image"));
+	g_signal_connect(widget, "clicked", G_CALLBACK(song_update_cb), album_array[current_song->album_id]);
+
+	//Create pixbuf
+	GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file_at_scale(image_path_buffer, 80, 80, FALSE, NULL);
+	if (pixbuf != NULL) {
+		//Apply image to song_info_image
+		GtkWidget *image = gtk_image_new_from_pixbuf(pixbuf);
+		gtk_button_set_image(GTK_BUTTON(widget), image);
+		gtk_widget_set_visible(image, TRUE);
+	} else {
+		gtk_button_set_image(GTK_BUTTON(widget), NULL);
+	}
+
+	//Set pause_icon status
+	GObject *pause_button = gtk_builder_get_object(builder, "play");
+	GtkWidget *img = gtk_image_new_from_icon_name("media-playback-pause-symbolic", GTK_ICON_SIZE_LARGE_TOOLBAR);
+	gtk_button_set_image(GTK_BUTTON(pause_button), img);
+
+	//Prepare duration text
+	char duration_buffer[NAME_LENGTH_MAX];
+	sprintf(duration_buffer, "%02d:%02d", current_song->duration / 60, current_song->duration % 60);
+
+	//Set song_position_label
+	GtkWidget *song_position_label = GTK_WIDGET(gtk_builder_get_object(builder, "song_position_label"));
+	gtk_label_set_text(GTK_LABEL(song_position_label), duration_buffer);
+
 }
 
 size_t album_image_task_count;
@@ -380,11 +366,9 @@ void init_control() {
 	toggle = gtk_builder_get_object(builder, "repeat_toggle");
 	g_signal_connect(toggle, "toggled", G_CALLBACK(control_repeat_toggle_cb), NULL);
 
-	GObject *vol_adj, *playback_adj;
+	GObject *vol_adj;
 	vol_adj = gtk_builder_get_object(builder, "volume_adjustment");
 	g_signal_connect(vol_adj, "value_changed", G_CALLBACK(control_volume_cb), NULL);
-	playback_adj = gtk_builder_get_object(builder, "playback_adjustment");
-	g_signal_connect(playback_adj, "value_changed", G_CALLBACK(music_position_modify_cb), NULL);
 }
 
 int main(int argc, char* argv[]) {

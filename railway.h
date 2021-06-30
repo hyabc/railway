@@ -5,8 +5,7 @@
 #ifndef __RAILWAY_H__
 #define __RAILWAY_H__
 
-void music_position_update_cb(GstPlayer*, GstClockTime, void*);
+void music_position_update_cb(GstPlayer*, GstClockTime, int*);
 void play_song(song_type*);
-void song_update_cb(GtkWidget*, album_type*);
 
 #endif

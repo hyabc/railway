@@ -238,6 +238,9 @@ void generate_song_tags() {
 		const GstTagList *tags = gst_discoverer_info_get_tags(info);
 		if (tags == NULL) continue;
 
+		//Get song duration
+		song_array[i]->duration = GST_TIME_AS_SECONDS(gst_discoverer_info_get_duration(info));
+
 		//Get these fields
 		char* str;
 		if (gst_tag_list_get_string(tags, "title", &str)) {
