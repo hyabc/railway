@@ -70,18 +70,12 @@ void song_update_cb(GtkWidget *widget, album_type *current_album) {
 		gtk_widget_set_size_request(button, -1, 48);
 		g_signal_connect(button, "clicked", G_CALLBACK(song_button_cb), song_array[i]);
 
-		//Generate song name
-		char* song_name_markup = g_markup_printf_escaped("<span>%s</span>  <span style=\"italic\" size=\"smaller\">\%s</span>", song_array[i]->tag_title != NULL ? song_array[i]->tag_title : "?", song_array[i]->tag_artist != NULL ? song_array[i]->tag_artist : "?");
-
 		//Create a label in the button
 		GtkWidget *label = gtk_label_new(NULL);
-		gtk_label_set_markup(GTK_LABEL(label), song_name_markup);
+		gtk_label_set_text(GTK_LABEL(label), song_array[i]->tag_title != NULL ? song_array[i]->tag_title : "unknown");
 		gtk_container_add(GTK_CONTAINER(button), label);
 		gtk_label_set_xalign(GTK_LABEL(label), 0);
 		gtk_widget_set_visible(label, TRUE);
-
-		//Free song name markup
-		g_free(song_name_markup);
 
 		//Set button not to focus
 		GValue val = G_VALUE_INIT;
@@ -95,17 +89,9 @@ void song_update_cb(GtkWidget *widget, album_type *current_album) {
 }
 
 void play_song(song_type *current_song) {
-	music_play(current_song);
-
-	//Prepare song info markup
-	char* song_info_markup = g_markup_printf_escaped("<span weight=\"bold\">%s</span> by <span weight=\"bold\">%s</span>", current_song->tag_title != NULL ? current_song->tag_title : "unknown", current_song->tag_artist != NULL ? current_song->tag_artist : "unknown");
-
 	//Set song_info_label
 	GtkWidget *song_info_label = GTK_WIDGET(gtk_builder_get_object(builder, "song_info_label"));
-	gtk_label_set_markup(GTK_LABEL(song_info_label), song_info_markup);
-
-	//Free markup string
-	g_free(song_info_markup);
+	gtk_label_set_text(GTK_LABEL(song_info_label), current_song->tag_title != NULL ? current_song->tag_title : "unknown");
 
 	//Create image path
 	char image_path_buffer[PATH_LENGTH_MAX];
@@ -142,6 +128,8 @@ void play_song(song_type *current_song) {
 	GtkWidget *song_position_label = GTK_WIDGET(gtk_builder_get_object(builder, "song_position_label"));
 	gtk_label_set_text(GTK_LABEL(song_position_label), duration_buffer);
 
+	//Play song
+	music_play(current_song);
 }
 
 size_t album_image_task_count;
@@ -238,11 +226,7 @@ void init_albums() {
 		gtk_label_set_max_width_chars(GTK_LABEL(artist_label), 15);
 		gtk_label_set_line_wrap(GTK_LABEL(artist_label), TRUE);
 		gtk_widget_set_visible(artist_label, TRUE);
-
-		//Set italic text
-		char* artist_markup = g_markup_printf_escaped("<span style=\"italic\" size=\"smaller\">\%s</span>", album_array[i]->artist_name);
-		gtk_label_set_markup(GTK_LABEL(artist_label), artist_markup);
-		g_free(artist_markup);
+		gtk_label_set_text(GTK_LABEL(artist_label), album_array[i]->artist_name);
 
 		//Set button not to focus
 		GValue val = G_VALUE_INIT;
