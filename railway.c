@@ -99,8 +99,8 @@ void play_song(song_type *current_song) {
 	gtk_button_set_image(GTK_BUTTON(pause_button), img);
 
 	//Prepare duration text
-	char duration_buffer[6];
-	snprintf(duration_buffer, 6, "%02d:%02d", current_song->duration / 60, current_song->duration % 60);
+	char duration_buffer[8];
+	snprintf(duration_buffer, 8, "%02d:%02d", current_song->duration / 60 % 60, current_song->duration % 60);
 
 	//Set song_position_label
 	GtkWidget *song_position_label = GTK_WIDGET(gtk_builder_get_object(builder, "song_position_label"));

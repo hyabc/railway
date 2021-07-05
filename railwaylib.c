@@ -103,7 +103,7 @@ void generate_album_list() {
 		strcat(artist_path_buffer, artist_dp->d_name);
 
 		//Iterate over album directory
-		if ((album_dir = opendir(artist_path_buffer)) == NULL) continue;
+		if ((album_dir = opendir(artist_path_buffer)) == NULL) {free(artist_path_buffer);free(artist_name_buffer);continue;}
 		while ((album_dp = readdir(album_dir)) != NULL) {
 			if (strcmp(album_dp->d_name, ".") == 0 || strcmp(album_dp->d_name, "..") == 0) continue;
 
@@ -121,36 +121,35 @@ void generate_album_list() {
 
 			//This should be a directory if it is an album folder
 			stat(album_path_buffer, &path_stat);
-			if (!S_ISDIR(path_stat.st_mode)) continue;
+			if (S_ISDIR(path_stat.st_mode)) {
+				//Create new album item
+				album_type *current_album = malloc(sizeof(album_type));
+				if (current_album == NULL) {
+					fprintf(stderr, "Insufficient memory\n");
+					exit(1);
+				}
+				current_album->next = NULL;
+				current_album->id = album_count++;
 
-			//Create new album item
-			album_type *current_album = malloc(sizeof(album_type));
-			if (current_album == NULL) {
-				fprintf(stderr, "Insufficient memory\n");
-				exit(1);
+				//Malloc memory
+				current_album->filename = malloc(strlen(album_path_buffer) + 1);
+				current_album->album_name = malloc(strlen(album_name_buffer) + 1);
+				current_album->artist_name = malloc(strlen(artist_name_buffer) + 1);
+				if (current_album->filename == NULL || current_album->album_name == NULL || current_album->artist_name == NULL) {
+					fprintf(stderr, "Insufficient memory\n");
+					exit(1);
+				}
+				strcpy(current_album->filename, album_path_buffer);
+				strcpy(current_album->album_name, album_name_buffer);
+				strcpy(current_album->artist_name, artist_name_buffer);
+
+				if (album_last == NULL) {
+					album_last = album_list = current_album;
+				} else {
+					album_last->next = current_album;
+					album_last = current_album;
+				}
 			}
-			current_album->next = NULL;
-			current_album->id = album_count++;
-
-			//Malloc memory
-			current_album->filename = malloc(strlen(album_path_buffer) + 1);
-			current_album->album_name = malloc(strlen(album_name_buffer) + 1);
-			current_album->artist_name = malloc(strlen(artist_name_buffer) + 1);
-			if (current_album->filename == NULL || current_album->album_name == NULL || current_album->artist_name == NULL) {
-				fprintf(stderr, "Insufficient memory\n");
-				exit(1);
-			}
-			strcpy(current_album->filename, album_path_buffer);
-			strcpy(current_album->album_name, album_name_buffer);
-			strcpy(current_album->artist_name, artist_name_buffer);
-
-			if (album_last == NULL) {
-				album_last = album_list = current_album;
-			} else {
-				album_last->next = current_album;
-				album_last = current_album;
-			}
-
 			free(album_path_buffer);
 			free(album_name_buffer);
 		}
@@ -209,11 +208,11 @@ void generate_album_button_image(GTask* gtask, void*, album_type *current_album,
 		strcat(song_path_buffer, song_dp->d_name);
 
 		stat(song_path_buffer, &path_stat);
-		if (!S_ISREG(path_stat.st_mode)) continue;
-		
 		free(song_path_buffer);
-		exist_any_song = true;
-		break;
+		if (S_ISREG(path_stat.st_mode)) {
+			exist_any_song = true;
+			break;
+		}
 	}
 	closedir(song_dir);
 
@@ -271,9 +270,9 @@ void generate_song_tags() {
 
 		//Call discover
 		GstDiscovererInfo *info = gst_discoverer_discover_uri(library_discoverer, song_path_buffer, NULL);
-		if (info == NULL) continue;
+		if (info == NULL) {free(song_path_buffer);continue;}
 		const GstTagList *tags = gst_discoverer_info_get_tags(info);
-		if (tags == NULL) continue;
+		if (tags == NULL) {free(song_path_buffer);continue;}
 
 		//Get song duration
 		song_array[i]->duration = GST_TIME_AS_SECONDS(gst_discoverer_info_get_duration(info));
@@ -350,32 +349,32 @@ void generate_song_list(const album_type* current_album) {
 
 		//Song should be a regular file
 		stat(song_path_buffer, &path_stat);
-		if (!S_ISREG(path_stat.st_mode)) continue;
+		if (S_ISREG(path_stat.st_mode)) {
+			//Create new song item
+			song_type *current_song = malloc(sizeof(song_type));
+			if (current_song == NULL) {
+				fprintf(stderr, "Insufficient memory\n");
+				exit(1);
+			}
+			current_song->next = NULL;
+			song_count++;
+			current_song->album_id = current_album->id;
+			current_song->filename = malloc(strlen(song_path_buffer) + 1);
+			current_song->song_name = malloc(strlen(song_name_buffer) + 1);
+			if (current_song->filename == NULL || current_song->song_name == NULL) {
+				fprintf(stderr, "Insufficient memory\n");
+				exit(1);
+			}
+			strcpy(current_song->filename, song_path_buffer);
+			strcpy(current_song->song_name, song_name_buffer);
 
-		//Create new song item
-		song_type *current_song = malloc(sizeof(song_type));
-		if (current_song == NULL) {
-			fprintf(stderr, "Insufficient memory\n");
-			exit(1);
-		}
-		current_song->next = NULL;
-		song_count++;
-		current_song->album_id = current_album->id;
-		current_song->filename = malloc(strlen(song_path_buffer) + 1);
-		current_song->song_name = malloc(strlen(song_name_buffer) + 1);
-		if (current_song->filename == NULL || current_song->song_name == NULL) {
-			fprintf(stderr, "Insufficient memory\n");
-			exit(1);
-		}
-		strcpy(current_song->filename, song_path_buffer);
-		strcpy(current_song->song_name, song_name_buffer);
-
-		//Insert to song list
-		if (song_last == NULL) {
-			song_last = song_list = current_song;
-		} else {
-			song_last->next = current_song;
-			song_last = current_song;
+			//Insert to song list
+			if (song_last == NULL) {
+				song_last = song_list = current_song;
+			} else {
+				song_last->next = current_song;
+				song_last = current_song;
+			}
 		}
 
 		free(song_path_buffer);
