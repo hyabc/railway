@@ -93,36 +93,14 @@ void play_song(song_type *current_song) {
 	GtkWidget *song_info_label = GTK_WIDGET(gtk_builder_get_object(builder, "song_info_label"));
 	gtk_label_set_text(GTK_LABEL(song_info_label), current_song->tag_title != NULL ? current_song->tag_title : "unknown");
 
-	//Create image path
-	char image_path_buffer[PATH_LENGTH_MAX];
-	strcpy(image_path_buffer, album_cache_path);
-	strcat(image_path_buffer, "/");
-	strcat(image_path_buffer, album_array[current_song->album_id]->album_name);
-	strcat(image_path_buffer, ".jpg");
-
-	//Prepare song_info_image widget
-	GtkWidget *widget = GTK_WIDGET(gtk_builder_get_object(builder, "song_info_image"));
-	g_signal_connect(widget, "clicked", G_CALLBACK(song_update_cb), album_array[current_song->album_id]);
-
-	//Create pixbuf
-	GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file_at_scale(image_path_buffer, 80, 80, FALSE, NULL);
-	if (pixbuf != NULL) {
-		//Apply image to song_info_image
-		GtkWidget *image = gtk_image_new_from_pixbuf(pixbuf);
-		gtk_button_set_image(GTK_BUTTON(widget), image);
-		gtk_widget_set_visible(image, TRUE);
-	} else {
-		gtk_button_set_image(GTK_BUTTON(widget), NULL);
-	}
-
 	//Set pause_icon status
 	GObject *pause_button = gtk_builder_get_object(builder, "play");
 	GtkWidget *img = gtk_image_new_from_icon_name("media-playback-pause-symbolic", GTK_ICON_SIZE_LARGE_TOOLBAR);
 	gtk_button_set_image(GTK_BUTTON(pause_button), img);
 
 	//Prepare duration text
-	char duration_buffer[NAME_LENGTH_MAX];
-	sprintf(duration_buffer, "%02d:%02d", current_song->duration / 60, current_song->duration % 60);
+	char duration_buffer[6];
+	snprintf(duration_buffer, 6, "%02d:%02d", current_song->duration / 60, current_song->duration % 60);
 
 	//Set song_position_label
 	GtkWidget *song_position_label = GTK_WIDGET(gtk_builder_get_object(builder, "song_position_label"));
@@ -138,7 +116,11 @@ void album_image_draw_cb(GtkWidget *widget, void*, GTask **album_image_tasks, vo
 	album_type *current_album = album_array[album_image_task_count];
 
 	//Create image path
-	char image_path_buffer[PATH_LENGTH_MAX];
+	char *image_path_buffer = malloc(strlen(album_cache_path) + 1 + strlen(current_album->album_name) + strlen(".jpg") + 1);
+	if (image_path_buffer == NULL) {
+		fprintf(stderr, "Insufficient memory\n");
+		exit(1);
+	}
 	strcpy(image_path_buffer, album_cache_path);
 	strcat(image_path_buffer, "/");
 	strcat(image_path_buffer, current_album->album_name);
@@ -152,6 +134,7 @@ void album_image_draw_cb(GtkWidget *widget, void*, GTask **album_image_tasks, vo
 		gtk_button_set_image(GTK_BUTTON(widget), image);
 		gtk_widget_set_visible(image, TRUE);
 	}
+	free(image_path_buffer);
 
 	//Prepare next image generation
 	album_image_task_count++;

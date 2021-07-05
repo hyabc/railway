@@ -23,12 +23,17 @@ void music_play(song_type *current_song) {
 	g_signal_connect(music_player, "position-updated", G_CALLBACK(music_position_update_cb), &music_duration);
 
 	//Prepare song path
-	char song_path_buffer[PATH_LENGTH_MAX];
+	char *song_path_buffer = malloc(strlen("file://") + strlen(current_song->filename) + 1);
+	if (song_path_buffer == NULL) {
+		fprintf(stderr, "Insufficient memory\n");
+		exit(1);
+	}
 	strcpy(song_path_buffer, "file://");
 	strcat(song_path_buffer, current_song->filename);
 
 	//Set URI and play
 	gst_player_set_uri(music_player, song_path_buffer);
+	free(song_path_buffer);
 	gst_player_play(music_player);
 	music_play_state = true;
 }

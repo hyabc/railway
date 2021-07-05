@@ -3,9 +3,6 @@
 
 #include <gtk/gtk.h>
 
-#define PATH_LENGTH_MAX 1000
-#define NAME_LENGTH_MAX 1000
-
 typedef struct album_type {
 	int id;
 	char *filename;
@@ -27,7 +24,7 @@ typedef struct song_type {
 extern size_t album_count, song_count;
 extern album_type **album_array;
 extern song_type **song_array;
-extern char library_path[], album_cache_path[];
+extern char *library_path, *album_cache_path;
 
 void init_library();
 void destroy_library();

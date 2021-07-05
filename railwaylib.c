@@ -13,7 +13,7 @@
 #include <sys/stat.h>
 #include "railwaylib.h"
 
-char library_path[PATH_LENGTH_MAX], album_cache_path[PATH_LENGTH_MAX];
+char *library_path, *album_cache_path;
 album_type *album_list, **album_array;
 song_type *song_list, **song_array;
 size_t album_count, song_count;
@@ -22,7 +22,11 @@ GstDiscoverer *library_discoverer;
 
 void init_library() {
 	// Create configuration path
-	char config_path_buffer[PATH_LENGTH_MAX];
+	char *config_path_buffer;
+	if ((config_path_buffer = malloc(strlen(getenv("HOME")) + strlen("/.railway") + 1)) == NULL) {
+		fprintf(stderr, "configuration error\n");
+		exit(1);
+	}
 	strcpy(config_path_buffer, getenv("HOME"));
 	strcat(config_path_buffer, "/.railway");
 
@@ -35,7 +39,7 @@ void init_library() {
 	}
 
 	//Get LIBRARY_PATH
-	if ((value = g_key_file_get_string(keyfile, "railway", "LIBRARY_PATH", NULL)) == NULL) {
+	if ((value = g_key_file_get_string(keyfile, "railway", "LIBRARY_PATH", NULL)) == NULL || (library_path = malloc(strlen(value) + 1)) == NULL) {
 		fprintf(stderr, "configuration error\n");
 		exit(1);
 	}
@@ -43,7 +47,7 @@ void init_library() {
 	g_free(value);
 
 	//Get ALBUM_CACHE_FREE
-	if ((value = g_key_file_get_string(keyfile, "railway", "ALBUM_CACHE_PATH", NULL)) == NULL) {
+	if ((value = g_key_file_get_string(keyfile, "railway", "ALBUM_CACHE_PATH", NULL)) == NULL || (album_cache_path = malloc(strlen(value) + 1)) == NULL) {
 		fprintf(stderr, "configuration error\n");
 		exit(1);
 	}
@@ -52,7 +56,7 @@ void init_library() {
 
 	//Free keyfile
 	g_key_file_free(keyfile);
-
+	free(config_path_buffer);
 
 	//Init discoverer
 	library_discoverer = gst_discoverer_new(1 * GST_SECOND, NULL);
@@ -62,7 +66,9 @@ void init_library() {
 }
 
 void destroy_library() {
-	g_object_unref (library_discoverer);
+	g_object_unref(library_discoverer);
+	free(library_path);
+	free(album_cache_path);
 }
 
 void generate_album_list() {
@@ -72,8 +78,6 @@ void generate_album_list() {
 	album_type* album_last = NULL;
 
 	struct dirent *artist_dp, *album_dp;
-	char artist_path_buffer[PATH_LENGTH_MAX], album_path_buffer[PATH_LENGTH_MAX];
-	char artist_name_buffer[NAME_LENGTH_MAX], album_name_buffer[NAME_LENGTH_MAX];
 	DIR *artist_dir, *album_dir;
 	struct stat path_stat;
 
@@ -84,8 +88,14 @@ void generate_album_list() {
 
 	//Iterate over artist directory
 	while ((artist_dp = readdir(artist_dir)) != NULL) {
+		if (strcmp(artist_dp->d_name, ".") == 0 || strcmp(artist_dp->d_name, "..") == 0) continue;
+
+		char *artist_path_buffer, *artist_name_buffer;
+		if ((artist_name_buffer = malloc(strlen(artist_dp->d_name) + 1)) == NULL || (artist_path_buffer = malloc(strlen(library_path) + 1 + strlen(artist_dp->d_name) + 1)) == NULL) {
+			fprintf(stderr, "Insufficient memory\n");
+			exit(1);
+		}
 		strcpy(artist_name_buffer, artist_dp->d_name);
-		if (strcmp(artist_name_buffer, ".") == 0 || strcmp(artist_name_buffer, "..") == 0) continue;
 
 		//Generate artist path
 		strcpy(artist_path_buffer, library_path);
@@ -95,8 +105,14 @@ void generate_album_list() {
 		//Iterate over album directory
 		if ((album_dir = opendir(artist_path_buffer)) == NULL) continue;
 		while ((album_dp = readdir(album_dir)) != NULL) {
+			if (strcmp(album_dp->d_name, ".") == 0 || strcmp(album_dp->d_name, "..") == 0) continue;
+
+			char *album_path_buffer, *album_name_buffer;
+			if ((album_name_buffer = malloc(strlen(album_dp->d_name) + 1)) == NULL || (album_path_buffer = malloc(strlen(artist_path_buffer) + 1 + strlen(album_dp->d_name) + 1)) == NULL) {
+				fprintf(stderr, "Insufficient memory\n");
+				exit(1);
+			}
 			strcpy(album_name_buffer, album_dp->d_name);
-			if (strcmp(album_name_buffer, ".") == 0 || strcmp(album_name_buffer, "..") == 0) continue;
 
 			//Generate album path
 			strcpy(album_path_buffer, artist_path_buffer);
@@ -134,8 +150,13 @@ void generate_album_list() {
 				album_last->next = current_album;
 				album_last = current_album;
 			}
+
+			free(album_path_buffer);
+			free(album_name_buffer);
 		}
 		closedir(album_dir);
+		free(artist_path_buffer);
+		free(artist_name_buffer);
 	}
 	closedir(artist_dir);
 
@@ -155,10 +176,14 @@ void generate_album_list() {
 }
 
 void generate_album_button_image(GTask* gtask, void*, album_type *current_album, void*) {
-	char image_path_buffer[PATH_LENGTH_MAX], song_path_buffer[PATH_LENGTH_MAX];
 	struct stat path_stat;
 
 	//Generate image path to save
+	char *image_path_buffer;
+	if ((image_path_buffer = malloc(strlen(album_cache_path) + 1 + strlen(current_album->album_name) + strlen(".jpg") + 1)) == NULL) {
+		fprintf(stderr, "Insufficient memory\n");
+		exit(1);
+	}
 	strcpy(image_path_buffer, album_cache_path);
 	strcat(image_path_buffer, "/");
 	strcat(image_path_buffer, current_album->album_name);
@@ -167,6 +192,7 @@ void generate_album_button_image(GTask* gtask, void*, album_type *current_album,
 	//Try to find one file as song
 	struct dirent *song_dp;
 	DIR *song_dir;
+	char *song_path_buffer;
 	bool exist_any_song = false;
 	if ((song_dir = opendir(current_album->filename)) == NULL) {
 		return;
@@ -174,6 +200,10 @@ void generate_album_button_image(GTask* gtask, void*, album_type *current_album,
 	while ((song_dp = readdir(song_dir)) != NULL) {
 		if (strcmp(song_dp->d_name, ".") == 0 || strcmp(song_dp->d_name, "..") == 0) continue;
 
+		if ((song_path_buffer = malloc(strlen(current_album->filename) + 1 + strlen(song_dp->d_name) + 1)) == NULL) {
+			fprintf(stderr, "Insufficient memory\n");
+			exit(1);
+		}
 		strcpy(song_path_buffer, current_album->filename);
 		strcat(song_path_buffer, "/");
 		strcat(song_path_buffer, song_dp->d_name);
@@ -181,6 +211,7 @@ void generate_album_button_image(GTask* gtask, void*, album_type *current_album,
 		stat(song_path_buffer, &path_stat);
 		if (!S_ISREG(path_stat.st_mode)) continue;
 		
+		free(song_path_buffer);
 		exist_any_song = true;
 		break;
 	}
@@ -200,6 +231,8 @@ void generate_album_button_image(GTask* gtask, void*, album_type *current_album,
 		}
 		waitpid(pid, &ret, 0);
 	}
+
+	free(image_path_buffer);
 }
 
 void destroy_album_list() {
@@ -221,14 +254,18 @@ void destroy_album_list() {
 }
 
 void generate_song_tags() {
-	char song_path_buffer[PATH_LENGTH_MAX];
 	for (int i = 0;i < song_count;i++) {
 		//Init tag fields in song_type in case not available
 		song_array[i]->tag_track_number = 0;
 		song_array[i]->tag_disc_number = 0;
 		song_array[i]->tag_title = song_array[i]->tag_album = song_array[i]->tag_artist = NULL;
 
-		//Create song rui
+		//Create song uri
+		char *song_path_buffer;
+		if ((song_path_buffer = malloc(strlen("file://") + strlen(song_array[i]->filename) + 1)) == NULL) {
+			fprintf(stderr, "Insufficient memory\n");
+			exit(1);
+		}
 		strcpy(song_path_buffer, "file://");
 		strcat(song_path_buffer, song_array[i]->filename);
 
@@ -268,6 +305,7 @@ void generate_song_tags() {
 
 		//Delete info
 		g_object_unref(info);
+		free(song_path_buffer);
 	}
 }
 
@@ -285,8 +323,6 @@ void generate_song_list(const album_type* current_album) {
 	song_type* song_last = NULL;
 
 	struct dirent *song_dp;
-	char song_path_buffer[PATH_LENGTH_MAX];
-	char song_name_buffer[NAME_LENGTH_MAX];
 	DIR *song_dir;
 	struct stat path_stat;
 
@@ -297,8 +333,15 @@ void generate_song_list(const album_type* current_album) {
 
 	//Iterate over song directory
 	while ((song_dp = readdir(song_dir)) != NULL) {
+		if (strcmp(song_dp->d_name, ".") == 0 || strcmp(song_dp->d_name, "..") == 0) continue;
+
+		char *song_path_buffer, *song_name_buffer;
+		if ((song_path_buffer = malloc(strlen(current_album->filename) + 1 + strlen(song_dp->d_name) + 1)) == NULL || (song_name_buffer = malloc(strlen(song_dp->d_name) + 1)) == NULL) {
+			fprintf(stderr, "Insufficient memory\n");
+			exit(1);
+		}
+		//Generate song path
 		strcpy(song_name_buffer, song_dp->d_name);
-		if (strcmp(song_name_buffer, ".") == 0 || strcmp(song_name_buffer, "..") == 0) continue;
 
 		//Generate song path
 		strcpy(song_path_buffer, current_album->filename);
@@ -327,12 +370,16 @@ void generate_song_list(const album_type* current_album) {
 		strcpy(current_song->filename, song_path_buffer);
 		strcpy(current_song->song_name, song_name_buffer);
 
+		//Insert to song list
 		if (song_last == NULL) {
 			song_last = song_list = current_song;
 		} else {
 			song_last->next = current_song;
 			song_last = current_song;
 		}
+
+		free(song_path_buffer);
+		free(song_name_buffer);
 	}
 	closedir(song_dir);
 
