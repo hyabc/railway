@@ -66,6 +66,7 @@ void init_playlist() {
 }
 
 void destroy_playlist() {
+	if (playlist_array == NULL) return;
 	for (int i = 0;i < playlist_count;i++) {
 		free(playlist_array[i]->filename);
 		free(playlist_array[i]->song_name);

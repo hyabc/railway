@@ -13,10 +13,12 @@ int music_duration;
 atomic_int music_atomic_is_stopped, music_atomic_position;
 FILE *music_player_out, *music_player_in;
 pid_t music_player_pid;
+pthread_t music_wait_thread;
 
 void* music_wait(void*) {
 	char buffer[256], op;
 	while (true) {
+		pthread_testcancel();
 		fgets(buffer, 256, music_player_in);
 		sscanf(buffer, "@%c", &op);
 		if (op == 'P') {
@@ -99,12 +101,13 @@ void init_music() {
 	music_player_in = fdopen(player_in[0], "r");
 
 	//Launch thread and set update function
-	pthread_t thread;
-	pthread_create(&thread, NULL, music_wait, NULL);
+	pthread_create(&music_wait_thread, NULL, music_wait, NULL);
 	g_timeout_add(1000, music_update, NULL);
 }
 
 void destroy_music() {
+	pthread_cancel(music_wait_thread);
+	pthread_join(music_wait_thread, NULL);
 	fprintf(music_player_out, "stop\nquit\n");
 	fflush(music_player_out);
 	waitpid(music_player_pid, NULL, 0);
