@@ -208,7 +208,6 @@ void generate_album_button_image(GTask* gtask, void*, album_type *current_album,
 		strcat(song_path_buffer, song_dp->d_name);
 
 		stat(song_path_buffer, &path_stat);
-		free(song_path_buffer);
 		if (S_ISREG(path_stat.st_mode)) {
 			exist_any_song = true;
 			break;
@@ -224,13 +223,14 @@ void generate_album_button_image(GTask* gtask, void*, album_type *current_album,
 		int ret;
 		if ((pid = fork()) == 0) {
 			int null_fd = open("/dev/null", O_WRONLY);
-			dup2(null_fd, 1);
-			dup2(null_fd, 2);
-			execl("/usr/bin/ffmpeg", "-nostdin", "-n", "-i", song_path_buffer, image_path_buffer, NULL);
+			dup2(null_fd, STDOUT_FILENO);
+			dup2(null_fd, STDERR_FILENO);
+			execl("/usr/bin/ffmpeg", "ffmpeg", "-nostdin", "-n", "-i", song_path_buffer, image_path_buffer, NULL);
 		}
 		waitpid(pid, &ret, 0);
 	}
 
+	free(song_path_buffer);
 	free(image_path_buffer);
 }
 

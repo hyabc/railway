@@ -1,6 +1,5 @@
 #include <gtk/gtk.h>
 #include <gst/gst.h>
-#include <gst/player/player.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <math.h>
@@ -14,10 +13,8 @@
 
 GtkBuilder *builder;
 
-void music_position_update_cb(GstPlayer*, GstClockTime time, int* duration) {
+void music_position_update_cb(int position_sec, int duration_sec) {
 	//Get time
-	int position_sec = GST_TIME_AS_SECONDS(time);
-	int duration_sec = *duration;
 	if (duration_sec == 0) return;
 	double progress = (double)(position_sec) / (double)(duration_sec);
 
@@ -106,6 +103,33 @@ void play_song(song_type *current_song) {
 	GtkWidget *song_position_label = GTK_WIDGET(gtk_builder_get_object(builder, "song_position_label"));
 	gtk_label_set_text(GTK_LABEL(song_position_label), duration_buffer);
 
+	//Create image path
+	char *image_path_buffer;
+	if ((image_path_buffer = malloc(strlen(album_cache_path) + 1 + strlen(album_array[current_song->album_id]->album_name) + strlen(".jpg") + 1)) == NULL) {
+		fprintf(stderr, "Insufficient memory\n");
+		exit(1);
+	}
+	strcpy(image_path_buffer, album_cache_path);
+	strcat(image_path_buffer, "/");
+	strcat(image_path_buffer, album_array[current_song->album_id]->album_name);
+	strcat(image_path_buffer, ".jpg");
+
+	//Prepare song_info_image widget
+	GtkWidget *widget = GTK_WIDGET(gtk_builder_get_object(builder, "song_info_image"));
+	g_signal_connect(widget, "clicked", G_CALLBACK(song_update_cb), album_array[current_song->album_id]);
+
+	//Create pixbuf
+	GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file_at_scale(image_path_buffer, 80, 80, FALSE, NULL);
+	if (pixbuf != NULL) {
+		//Apply image to song_info_image
+		GtkWidget *image = gtk_image_new_from_pixbuf(pixbuf);
+		gtk_button_set_image(GTK_BUTTON(widget), image);
+		gtk_widget_set_visible(image, TRUE);
+	} else {
+		gtk_button_set_image(GTK_BUTTON(widget), NULL);
+	}
+	free(image_path_buffer);
+
 	//Play song
 	music_play(current_song);
 }
@@ -133,6 +157,8 @@ void album_image_draw_cb(GtkWidget *widget, void*, GTask **album_image_tasks, vo
 		GtkWidget *image = gtk_image_new_from_pixbuf(pixbuf);
 		gtk_button_set_image(GTK_BUTTON(widget), image);
 		gtk_widget_set_visible(image, TRUE);
+	} else {
+		gtk_button_set_image(GTK_BUTTON(widget), NULL);
 	}
 	free(image_path_buffer);
 

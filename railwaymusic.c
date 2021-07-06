@@ -1,51 +1,65 @@
-#include <gst/gst.h>
-#include <gst/player/player.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <stdatomic.h>
+#include <sys/wait.h>
 #include "railway.h"
 #include "railwaylib.h"
 #include "railwayplaylist.h"
 #include "railwaymusic.h"
 
-GstPlayer *music_player, *music_player_last;
 bool music_play_state;
 int music_duration;
+atomic_int music_atomic_is_stopped, music_atomic_position;
+FILE *music_player_out, *music_player_in;
+pid_t music_player_pid;
+
+void* music_wait(void*) {
+	char buffer[256], op;
+	while (true) {
+		fgets(buffer, 256, music_player_in);
+		sscanf(buffer, "@%c", &op);
+		if (op == 'P') {
+			int state;
+			sscanf(buffer, "@P %d", &state);
+			music_atomic_is_stopped = state == 0 ? 1 : 0;
+		} else if (op == 'F') {
+			int fc, fl;
+			float sec, secl;
+			sscanf(buffer, "@F %d %d %f %f", &fc, &fl, &sec, &secl);
+			music_atomic_position = (int)(sec);
+		}
+	}
+}
+
+int music_update(void*) {
+	if (music_play_state && music_atomic_is_stopped) {
+		playlist_next();
+	}
+	music_position_update_cb(music_atomic_position, music_duration);
+	return true;
+}
 
 void music_play(song_type *current_song) {
-	//Remove music_player
-	if (music_player != NULL) gst_player_stop(music_player);
-	if (music_player_last != NULL) g_clear_object(&music_player_last);
-	music_player_last = music_player;
-
-	//Create new gst_player object
-	music_player = gst_player_new(NULL, NULL);
-	music_duration = current_song->duration;
-	g_signal_connect(music_player, "end-of-stream", G_CALLBACK(playlist_next), NULL);
-	g_signal_connect(music_player, "position-updated", G_CALLBACK(music_position_update_cb), &music_duration);
-
-	//Prepare song path
-	char *song_path_buffer = malloc(strlen("file://") + strlen(current_song->filename) + 1);
-	if (song_path_buffer == NULL) {
-		fprintf(stderr, "Insufficient memory\n");
-		exit(1);
+	//Stop current player
+	if (music_player_out != NULL) {
+		fprintf(music_player_out, "stop\n");
+		fflush(music_player_out);
 	}
-	strcpy(song_path_buffer, "file://");
-	strcat(song_path_buffer, current_song->filename);
 
-	//Set URI and play
-	gst_player_set_uri(music_player, song_path_buffer);
-	free(song_path_buffer);
-	gst_player_play(music_player);
+	//Play song file
+	fprintf(music_player_out, "load %s\n", current_song->filename);
+	fflush(music_player_out);
+
+	//Set playing state
 	music_play_state = true;
+	music_duration = current_song->duration;
 }
 
 void music_pause_trigger() {
-	if (music_play_state) {
-		gst_player_pause(music_player);
-		music_play_state = false;
-	} else {
-		gst_player_play(music_player);
-		music_play_state = true;
-	}
+	music_play_state = !music_play_state;
+	fprintf(music_player_out, "pause\n");
+	fflush(music_player_out);
 }
 
 bool music_is_playing() {
@@ -53,17 +67,45 @@ bool music_is_playing() {
 }
 
 void music_volume(double value) {
-	gst_player_set_volume(music_player, value);
+	fprintf(music_player_out, "volume %d\n", (int)(value * 100.0));
+	fflush(music_player_out);
 }
 
 void init_music() {
-	music_player = NULL;
-	music_player_last = NULL;
+	//Init variables
 	music_play_state = false;
 	music_duration = 0;
+	music_atomic_position = 0;
+	music_atomic_is_stopped = true;
+
+	//Create pipes
+	int player_in[2], player_out[2];
+	if (pipe(player_in) == -1 || pipe(player_out) == -1) {
+		perror("Pipe error");
+		exit(1);
+	}
+
+	//Launch mpg123
+	if ((music_player_pid = fork()) == 0) {
+		close(player_out[1]);
+		close(player_in[0]);
+		dup2(player_out[0], STDIN_FILENO);
+		dup2(player_in[1], STDOUT_FILENO);
+		execl("/usr/bin/mpg123", "mpg123", "-R", NULL);
+	}
+	close(player_out[0]);
+	close(player_in[1]);
+	music_player_out = fdopen(player_out[1], "w");
+	music_player_in = fdopen(player_in[0], "r");
+
+	//Launch thread and set update function
+	pthread_t thread;
+	pthread_create(&thread, NULL, music_wait, NULL);
+	g_timeout_add(1000, music_update, NULL);
 }
 
 void destroy_music() {
-	if (music_player_last != NULL) g_clear_object(&music_player_last);
-	if (music_player != NULL) g_clear_object(&music_player);
+	fprintf(music_player_out, "stop\nquit\n");
+	fflush(music_player_out);
+	waitpid(music_player_pid, NULL, 0);
 }
