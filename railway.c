@@ -105,12 +105,14 @@ void play_song(song_type *current_song) {
 
 	//Create image path
 	char *image_path_buffer;
-	if ((image_path_buffer = malloc(strlen(album_cache_path) + 1 + strlen(album_array[current_song->album_id]->album_name) + strlen(".jpg") + 1)) == NULL) {
+	if ((image_path_buffer = malloc(strlen(album_cache_path) + 1 + strlen(album_array[current_song->album_id]->artist_name) + 1 + strlen(album_array[current_song->album_id]->album_name) + strlen(".jpg") + 1)) == NULL) {
 		fprintf(stderr, "Insufficient memory\n");
 		exit(1);
 	}
 	strcpy(image_path_buffer, album_cache_path);
 	strcat(image_path_buffer, "/");
+	strcat(image_path_buffer, album_array[current_song->album_id]->artist_name);
+	strcat(image_path_buffer, "-");
 	strcat(image_path_buffer, album_array[current_song->album_id]->album_name);
 	strcat(image_path_buffer, ".jpg");
 
@@ -140,13 +142,15 @@ void album_image_draw_cb(GtkWidget *widget, void*, GTask **album_image_tasks, vo
 	album_type *current_album = album_array[album_image_task_count];
 
 	//Create image path
-	char *image_path_buffer = malloc(strlen(album_cache_path) + 1 + strlen(current_album->album_name) + strlen(".jpg") + 1);
+	char *image_path_buffer = malloc(strlen(album_cache_path) + 1 + strlen(current_album->artist_name) + 1 + strlen(current_album->album_name) + strlen(".jpg") + 1);
 	if (image_path_buffer == NULL) {
 		fprintf(stderr, "Insufficient memory\n");
 		exit(1);
 	}
 	strcpy(image_path_buffer, album_cache_path);
 	strcat(image_path_buffer, "/");
+	strcat(image_path_buffer, current_album->artist_name);
+	strcat(image_path_buffer, "-");
 	strcat(image_path_buffer, current_album->album_name);
 	strcat(image_path_buffer, ".jpg");
 

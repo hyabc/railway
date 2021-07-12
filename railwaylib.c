@@ -179,12 +179,14 @@ void generate_album_button_image(GTask* gtask, void*, album_type *current_album,
 
 	//Generate image path to save
 	char *image_path_buffer;
-	if ((image_path_buffer = malloc(strlen(album_cache_path) + 1 + strlen(current_album->album_name) + strlen(".jpg") + 1)) == NULL) {
+	if ((image_path_buffer = malloc(strlen(album_cache_path) + 1 + strlen(current_album->artist_name) + 1 + strlen(current_album->album_name) + strlen(".jpg") + 1)) == NULL) {
 		fprintf(stderr, "Insufficient memory\n");
 		exit(1);
 	}
 	strcpy(image_path_buffer, album_cache_path);
 	strcat(image_path_buffer, "/");
+	strcat(image_path_buffer, current_album->artist_name);
+	strcat(image_path_buffer, "-");
 	strcat(image_path_buffer, current_album->album_name);
 	strcat(image_path_buffer, ".jpg");
 
