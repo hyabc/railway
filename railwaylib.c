@@ -174,7 +174,7 @@ void generate_album_list() {
 	}
 }
 
-void generate_album_button_image(GTask* gtask, void*, album_type *current_album, void*) {
+void generate_album_button_image(GTask* gtask, void* x, album_type *current_album, void* y) {
 	struct stat path_stat;
 
 	//Generate image path to save

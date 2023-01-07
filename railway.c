@@ -25,7 +25,7 @@ void music_position_update_cb(int position_sec, int duration_sec) {
 	}
 }
 
-void music_pause_button_trigger_cb(GtkWidget *widget, void*) {
+void music_pause_button_trigger_cb(GtkWidget *widget, void* x) {
 	//Set pause_icon status
 	GtkWidget *img;
 	if (music_is_playing()) {
@@ -138,7 +138,7 @@ void play_song(song_type *current_song) {
 
 size_t album_image_task_count;
 
-void album_image_draw_cb(GtkWidget *widget, void*, GTask **album_image_tasks, void*) {
+void album_image_draw_cb(GtkWidget *widget, void* x, GTask **album_image_tasks, void* y) {
 	album_type *current_album = album_array[album_image_task_count];
 
 	//Create image path
@@ -272,15 +272,15 @@ void control_volume_cb(GtkWidget *widget, gpointer data) {
 	music_volume(gtk_adjustment_get_value(GTK_ADJUSTMENT(widget)));
 }
 
-void control_next_cb(GtkWidget*, void*) {
+void control_next_cb(GtkWidget* x, void*y) {
 	playlist_next();
 }
 
-void control_prev_cb(GtkWidget*, void*) {
+void control_prev_cb(GtkWidget* x, void* y) {
 	playlist_prev();
 }
 
-void control_search_button_cb(GtkWidget*, void*) {
+void control_search_button_cb(GtkWidget* x, void* y) {
 	//Activate searchbar
 	GObject *searchbar = gtk_builder_get_object(builder, "searchbar");
 	gtk_search_bar_set_search_mode(GTK_SEARCH_BAR(searchbar), TRUE);
@@ -306,13 +306,13 @@ bool search_judge(album_type *current_album, const char* search_str) {
 	return substring_test(current_album->album_name, search_str) || substring_test(current_album->artist_name, search_str);
 }
 
-void search_reset_filter_cb(GtkWidget*, void*) {
+void search_reset_filter_cb(GtkWidget* x, void* y) {
 	for (int i = 0;i < album_count;i++) {
 		gtk_widget_set_visible(album_flowboxchild_array[i], TRUE);
 	}
 }
 
-void search_entry_changed_cb(GtkWidget*, void*) {
+void search_entry_changed_cb(GtkWidget* x, void* y) {
 	//Get search string
 	GtkEntryBuffer *buffer = GTK_ENTRY_BUFFER(gtk_builder_get_object(builder, "search_text"));
 	const char *search_str = gtk_entry_buffer_get_text(buffer);
@@ -332,11 +332,11 @@ void search_entry_changed_cb(GtkWidget*, void*) {
 	}
 }
 
-void control_shuffle_toggle_cb(GtkWidget *toggle, void*) {
+void control_shuffle_toggle_cb(GtkWidget *toggle, void* x) {
 	playlist_set_shuffle(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(toggle)));
 }
 
-void control_repeat_toggle_cb(GtkWidget *toggle, void*) {
+void control_repeat_toggle_cb(GtkWidget *toggle, void* x) {
 	playlist_set_repeat(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(toggle)));
 }
 

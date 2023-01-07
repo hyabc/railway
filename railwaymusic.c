@@ -15,7 +15,7 @@ FILE *music_player_out, *music_player_in;
 pid_t music_player_pid;
 pthread_t music_wait_thread;
 
-void* music_wait(void*) {
+void* music_wait(void* x) {
 	char buffer[256], op;
 	while (true) {
 		pthread_testcancel();
@@ -34,7 +34,7 @@ void* music_wait(void*) {
 	}
 }
 
-int music_update(void*) {
+int music_update(void* x) {
 	if (music_play_state && music_atomic_is_stopped) {
 		playlist_next();
 	}
