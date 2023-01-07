@@ -1,6 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=Project Railway
+Name=Railway
 GenericName=Music Player
 Categories=Audio;
+Icon=org.gnome.Music
 Exec=sh -c "cd ~/.local/bin/railway && ./railway"
