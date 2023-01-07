@@ -46,7 +46,7 @@ void init_library() {
 	strcpy(library_path, value);
 	g_free(value);
 
-	//Get ALBUM_CACHE_FREE
+	//Get ALBUM_CACHE_PATH
 	if ((value = g_key_file_get_string(keyfile, "railway", "ALBUM_CACHE_PATH", NULL)) == NULL || (album_cache_path = malloc(strlen(value) + 1)) == NULL) {
 		fprintf(stderr, "configuration error\n");
 		exit(1);
