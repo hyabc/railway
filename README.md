@@ -4,7 +4,11 @@ Project Railway is a gtk+ music player.
 
 ## Requirement
 
-The following packages are needed to compile and run: `ffmpeg gtk3-devel gstreamer1-devel gstreamer1-plugins-base-devel gstreamer1-plugins-bad-free-devel`.
+The following packages are needed to compile and run: `ffmpeg mpg123 gtk3-devel gstreamer1-devel gstreamer1-plugins-base-devel gstreamer1-plugins-bad-free-devel`.
+
+On Debian: `ffmpeg mpg123 libgtk-3-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev`.
+
+Also, you can install [Glade](https://glade.gnome.org/) to edit the UI file.
 
 ## Compile
 
