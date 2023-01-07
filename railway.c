@@ -232,14 +232,15 @@ void init_albums() {
 		gtk_label_set_max_width_chars(GTK_LABEL(label), 15);
 		gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
 		gtk_widget_set_visible(label, TRUE);
+		gtk_label_set_selectable(GTK_LABEL(label), TRUE);
 
 		//Create a label about artist name in the box
-		GtkWidget *artist_label = gtk_label_new(NULL);
+		GtkWidget *artist_label = gtk_label_new(album_array[i]->artist_name);
 		gtk_container_add(GTK_CONTAINER(box), artist_label);
 		gtk_label_set_max_width_chars(GTK_LABEL(artist_label), 15);
 		gtk_label_set_line_wrap(GTK_LABEL(artist_label), TRUE);
 		gtk_widget_set_visible(artist_label, TRUE);
-		gtk_label_set_text(GTK_LABEL(artist_label), album_array[i]->artist_name);
+		gtk_label_set_selectable(GTK_LABEL(artist_label), TRUE);
 
 		//Set button not to focus
 		GValue val = G_VALUE_INIT;
@@ -247,6 +248,7 @@ void init_albums() {
 		g_value_set_boolean(&val, FALSE);
 		g_object_set_property(G_OBJECT(button), "can-focus", &val);
 		g_object_set_property(G_OBJECT(label), "can-focus", &val);
+		g_object_set_property(G_OBJECT(artist_label), "can-focus", &val);
 		g_object_set_property(G_OBJECT(box), "can-focus", &val);
 		g_object_set_property(G_OBJECT(flowboxchild), "can-focus", &val);
 		g_value_unset(&val);

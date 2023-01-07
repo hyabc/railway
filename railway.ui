@@ -303,6 +303,7 @@
                         <property name="halign">start</property>
                         <property name="margin-start">20</property>
                         <property name="margin-end">20</property>
+                        <property name="selectable">True</property>
                         <attributes>
                           <attribute name="scale" value="1.25"/>
                         </attributes>
@@ -446,4 +447,3 @@ audio-volume-medium-symbolic</property>
     </child>
   </object>
 </interface>
-
